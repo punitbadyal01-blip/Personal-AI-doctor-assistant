@@ -1,0 +1,14 @@
+param([string]$Serial='', [string]$SdkPath='D:/android', [switch]$Development)
+$ErrorActionPreference='Stop'
+$adb=Join-Path $SdkPath 'platform-tools/adb.exe'
+if (-not $Serial) {
+ $devices=@(& $adb devices | Select-String '^([^\s]+)\s+device$' | ForEach-Object { $_.Matches[0].Groups[1].Value })
+ if ($devices.Count -ne 1) { throw 'Connect and authorize exactly one phone/emulator, or pass -Serial. Enable USB debugging and accept the phone authorization prompt.' }
+ $Serial=$devices[0]
+}
+$apk=Join-Path (Split-Path $PSScriptRoot) $(if($Development){'releases/HealthClear-dev.apk'}else{'releases/HealthClear-1.2.apk'})
+& $adb -s $Serial install --no-incremental -r $apk
+if ($LASTEXITCODE -ne 0) { throw 'Installation failed. Keep the exact Android error above; do not uninstall or erase data automatically.' }
+if ($Development) { & $adb -s $Serial reverse tcp:8080 tcp:8080; if ($LASTEXITCODE -ne 0) { throw 'Could not set up the USB backend connection.' } }
+& $adb -s $Serial shell am start -W -n com.healthclear.app/.MainActivity
+if ($LASTEXITCODE -ne 0) { throw 'App launch failed.' }

@@ -1,0 +1,4 @@
+import {createServer} from './server.mjs';
+const lines=['FICTIONAL AUTOMATED TEST ONLY','Hemoglobin: 10.8 g/dL | Reference range: 12.0–15.5 g/dL','Recommendation: Discuss this result with your clinician.'];
+const provider=async(kind,body)=>kind==='ocr'?{documentType:'written_report',lines:lines.map(text=>({page:1,text,uncertain:false})),warnings:[]}:kind==='chat'?{enoughInformation:true,claims:[{ref:2,quote:lines[2],text:'Discuss this result with your clinician.'}],education:''}:{findings:[{ref:1,quote:lines[1],text:'The printed hemoglobin value is 10.8 g/dL.'}],followups:[{ref:2,quote:lines[2],text:'Discuss this result with your clinician.'}],terms:[{term:'Hemoglobin',definition:'General education: a protein in red blood cells.'}],questions:['What should I ask my clinician?']};
+createServer({accessToken:'test-only-fixture-token-12345678901234567890',provider}).listen(8080,'127.0.0.1',()=>console.log('AUTOMATED TEST FIXTURE ONLY - no real OCR or AI - port 8080'));

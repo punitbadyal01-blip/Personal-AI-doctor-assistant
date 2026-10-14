@@ -16,3 +16,5 @@
 
 # Keep the installable APK, exclude transient signing sidecars
 *.apk.idsig
+**/.test-avd/
+**/test-output/

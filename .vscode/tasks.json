@@ -1,0 +1,10 @@
+{
+  "version":"2.0.0",
+  "tasks":[
+    {"label":"HealthClear: Start backend","type":"process","command":"node","args":["--env-file-if-exists=.env","server.mjs"],"options":{"cwd":"${workspaceFolder}/healthclear/backend"},"isBackground":true,"problemMatcher":{"pattern":{"regexp":"^$"},"background":{"activeOnStart":true,"beginsPattern":".*","endsPattern":"HealthClear backend is listening"}}},
+    {"label":"HealthClear: Tests","type":"process","command":"node","args":["--test","tests.mjs","backend/tests.mjs"],"options":{"cwd":"${workspaceFolder}/healthclear"},"problemMatcher":[]},
+    {"label":"HealthClear: Build APK","type":"process","command":"powershell","args":["-NoProfile","-ExecutionPolicy","Bypass","-File","${workspaceFolder}/healthclear/android/build-apk.ps1","-SdkPath","D:/android","-JavaPath","C:/Program Files/Java/jdk-24"],"group":{"kind":"build","isDefault":true},"problemMatcher":[]},
+    {"label":"HealthClear: Build phone development APK","type":"process","command":"powershell","args":["-NoProfile","-ExecutionPolicy","Bypass","-File","${workspaceFolder}/healthclear/android/build-apk.ps1","-SdkPath","D:/android","-JavaPath","C:/Program Files/Java/jdk-24","-Development"],"problemMatcher":[]},
+    {"label":"HealthClear: Install and run on USB phone","dependsOn":"HealthClear: Build phone development APK","type":"process","command":"powershell","args":["-NoProfile","-ExecutionPolicy","Bypass","-File","${workspaceFolder}/healthclear/android/install-phone.ps1","-Development"],"problemMatcher":[]}
+  ]
+}
