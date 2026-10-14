@@ -37,7 +37,7 @@ Live OCR, live medical explanations, live translation, free-text AI chat, cloud 
 For live services, implement authenticated server endpoints with server-only API keys. Revalidate files on the server, isolate parsing, avoid medical-content logs, and require source references with exact values/units and preserved negation/uncertainty. Treat document content as untrusted data, never model instructions. Implement user-owned storage and deletion before enabling real report history. Explain any new transmission/retention and obtain consent before sending personal reports. No clinical or regulatory certification is claimed.
 
 ## Privacy
-The app has NO INTERNET permission. It blocks external WebView content/navigation and accepts only bundled assets at its internal origin. No analytics or training collection. Android speech selects offline voices only.
+The app has NO INTERNET permission. It blocks external WebView content and accepts only bundled assets at its internal origin. The developer GitHub link opens the system browser, outside the app. No analytics or training collection. Android speech selects offline voices only.
 
 Personal file bytes stay in memory; PDFs and camera captures may temporarily occupy private app cache. Leaving a report or destroying the activity clears those files; after a crash/forced stop, the next app launch clears them. OS memory reclamation is outside the app's control. App backup is disabled. Only fictional sample IDs/languages can be explicitly saved in local WebView storage; users of the same device profile can see them. A summary is written outside private app storage only when the user selects an export destination.
 
@@ -47,3 +47,7 @@ Run `node --test tests.mjs` from this folder. Automated checks cover traceabilit
 Manual device checklist: try all three samples and languages; follow sources; play/pause/replay; export; save/open/delete; pick unreadable images and multipage PDFs; deny/cancel picker/camera; rotate; use Back; background the app during speech; verify airplane-mode behavior. Personal uploads must never show simulated analysis.
 
 The optional `npm start` command runs a desktop UI preview only; it is not needed to use the Android app.
+
+## Developer
+
+Created by **Punit Badyal** · [GitHub](https://github.com/punitbadyal01-blip). The developer section is available in Settings.

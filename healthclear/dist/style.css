@@ -12,3 +12,5 @@
 .android-app .source-link{min-height:44px;padding:10px 4px}
 .android-app textarea{font-size:16px}
 .android-app #question{min-width:0;width:100%}
+
+.developer-card{display:flex;align-items:flex-start;gap:20px;margin:26px 0;background:#eef3e9}.developer-avatar{width:62px;height:62px;border-radius:18px;background:#176d60;color:white;display:grid;place-items:center;font-size:22px;font-weight:700;flex-shrink:0}.developer-card h2{font-size:25px;margin:12px 0 8px}.developer-card p{margin:8px 0 16px}.developer-card .fine{margin:12px 0 0!important}@media(max-width:420px){.developer-card{flex-direction:column}}

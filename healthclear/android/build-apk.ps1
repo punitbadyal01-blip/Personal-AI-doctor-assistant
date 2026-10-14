@@ -15,7 +15,7 @@ function Run-Checked { param([string]$Executable,[string[]]$Arguments) & $Execut
 Run-Checked (Join-Path $toolRoot 'aapt2.exe') @('compile','--dir',(Join-Path $androidRoot 'app/src/main/res'),'-o',(Join-Path $buildRoot 'resources.zip'))
 $manifest = [IO.File]::ReadAllText((Join-Path $androidRoot 'app/src/main/AndroidManifest.xml')).Replace('<manifest ', '<manifest package="com.healthclear.app" ')
 [IO.File]::WriteAllText((Join-Path $buildRoot 'AndroidManifest.xml'),$manifest)
-Run-Checked (Join-Path $toolRoot 'aapt2.exe') @('link','-o',(Join-Path $buildRoot 'unsigned.apk'),'--manifest',(Join-Path $buildRoot 'AndroidManifest.xml'),'-I',$platformJar,'-A',(Join-Path $projectRoot 'dist'),'--min-sdk-version','26','--target-sdk-version','36','--version-code','1','--version-name','1.0-demo',(Join-Path $buildRoot 'resources.zip'))
+Run-Checked (Join-Path $toolRoot 'aapt2.exe') @('link','-o',(Join-Path $buildRoot 'unsigned.apk'),'--manifest',(Join-Path $buildRoot 'AndroidManifest.xml'),'-I',$platformJar,'-A',(Join-Path $projectRoot 'dist'),'--min-sdk-version','26','--target-sdk-version','36','--version-code','2','--version-name','1.1-demo',(Join-Path $buildRoot 'resources.zip'))
 $sources = @(Get-ChildItem (Join-Path $androidRoot 'app/src/main/java') -Filter '*.java' -Recurse | ForEach-Object FullName)
 Run-Checked (Join-Path $JavaPath 'bin/javac.exe') (@('-encoding','UTF-8','--release','17','-classpath',$platformJar,'-d',(Join-Path $buildRoot 'classes')) + $sources)
 Run-Checked (Join-Path $JavaPath 'bin/jar.exe') @('cf',(Join-Path $buildRoot 'classes.jar'),'-C',(Join-Path $buildRoot 'classes'),'.')
