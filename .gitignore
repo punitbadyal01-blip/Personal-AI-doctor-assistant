@@ -1,0 +1,18 @@
+# Local build products and tooling state
+.openai/
+**/.gradle/
+**/build/
+**/build-direct/
+**/local.properties
+**/node_modules/
+
+# Credentials and signing keys
+.env
+.env.*
+!.env.example
+*.keystore
+*.jks
+*.pem
+
+# Keep the installable APK, exclude transient signing sidecars
+*.apk.idsig

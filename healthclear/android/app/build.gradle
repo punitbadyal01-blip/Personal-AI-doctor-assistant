@@ -1,0 +1,8 @@
+plugins { id 'com.android.application' }
+android {
+ namespace 'com.healthclear.app'
+ compileSdk 36
+ defaultConfig { applicationId 'com.healthclear.app'; minSdk 26; targetSdk 36; versionCode 1; versionName '1.0-demo' }
+ sourceSets { main { assets.srcDirs = ['../../dist'] } }
+ compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+}
