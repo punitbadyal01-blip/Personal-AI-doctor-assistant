@@ -3,8 +3,10 @@ $ErrorActionPreference='Stop'
 $adb=Join-Path $SdkPath 'platform-tools/adb.exe'
 if (-not $Serial) {
  $devices=@(& $adb devices | Select-String '^([^\s]+)\s+device$' | ForEach-Object { $_.Matches[0].Groups[1].Value })
- if ($devices.Count -ne 1) { throw 'Connect and authorize exactly one phone/emulator, or pass -Serial. Enable USB debugging and accept the phone authorization prompt.' }
- $Serial=$devices[0]
+ $phones=@($devices | Where-Object { $_ -notlike 'emulator-*' })
+ if ($phones.Count -eq 1) { $Serial=$phones[0] }
+ elseif ($phones.Count -eq 0 -and $devices.Count -eq 1) { $Serial=$devices[0] }
+ else { throw 'Connect and authorize one phone, or pass -Serial when multiple physical devices are connected. Enable USB debugging and accept the phone authorization prompt.' }
 }
 $apk=Join-Path (Split-Path $PSScriptRoot) $(if($Development){'releases/HealthClear-dev.apk'}else{'releases/HealthClear-1.2.apk'})
 & $adb -s $Serial install --no-incremental -r $apk
