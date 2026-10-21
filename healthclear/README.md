@@ -1,4 +1,8 @@
-# HealthClear 1.2
+# Supabase update — HealthClear 1.3
+
+Optional cloud accounts and private saved report text are implemented. Setup: [Supabase guide](supabase/README.md). Supabase project credentials and migration are required; they are not bundled. Install the new `HealthClear-1.3.apk` from the releases folder.
+
+# HealthClear 1.3
 
 Installable Android app by Punit Badyal, with a local interface and native Android integrations. Android 8+; compile/target SDK 36. Build and phone-testing instructions are in [backend/SETUP.md](backend/SETUP.md). Open the root `HealthClear.code-workspace` in VS Code.
 
@@ -25,7 +29,7 @@ From the repository root:
 
     powershell -File healthclear/android/build-apk.ps1 -SdkPath D:/android -JavaPath "C:/Program Files/Java/jdk-24"
 
-For USB backend testing add `-Development`; it writes `HealthClear-dev.apk` and only permits loopback HTTP at `http://127.0.0.1:8080`. The regular `HealthClear-1.2.apk` requires HTTPS. Both use the same local development signing key so updates can retain app data. The key remains ignored under `android/build-direct`; preserve it privately. This is not Play Store release signing.
+For USB backend testing add `-Development`; it writes `HealthClear-dev.apk` and only permits loopback HTTP at `http://127.0.0.1:8080`. The regular `HealthClear-1.3.apk` requires HTTPS. Both use the same local development signing key so updates can retain app data. The key remains ignored under `android/build-direct`; preserve it privately. This is not Play Store release signing.
 
 Open `android/` in Android Studio for the Gradle project (AGP 8.13, compile SDK 36, Java 17 language level). VS Code uses the supplied standalone SDK build script without requiring Gradle downloads. `releases/SHA256SUMS.txt` records the APK hashes.
 

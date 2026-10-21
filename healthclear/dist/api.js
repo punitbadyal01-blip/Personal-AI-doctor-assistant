@@ -7,7 +7,7 @@ export const connection={get url(){return endpoint;},get ready(){return !!(endpo
 if(typeof window!=='undefined')window.healthclearApiResponse=(id,status,body)=>{const task=pending.get(id);if(!task)return;pending.delete(id);clearTimeout(task.timer);try{const data=JSON.parse(body);if(status<200||status>=300)throw Error(data.error||'Backend request failed.');task.resolve(data);}catch(e){task.reject(e);}};
 export async function api(route,payload={}){
  if(!connection.ready)throw Error('Connect your backend in Settings before analyzing personal reports.');
- if(!['status','ocr','explain','chat'].includes(route))throw Error('Unsupported operation.');
+ if(!['status','ocr','explain','chat','cloud'].includes(route))throw Error('Unsupported operation.');
  const body=JSON.stringify(payload);
  if(globalThis.HealthClearAndroid){return new Promise((resolve,reject)=>{const id=String(++sequence);const timer=setTimeout(()=>{pending.delete(id);reject(Error('Request timed out. Please retry.'));},110000);pending.set(id,{resolve,reject,timer});HealthClearAndroid.request(id,endpoint,token,route,body);});}
  let response;try{response=await fetch(endpoint+'/v1/'+route,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body,signal:AbortSignal.timeout(100000)});}catch{throw Error('Could not connect securely to your backend. Check its URL and network connection.');}

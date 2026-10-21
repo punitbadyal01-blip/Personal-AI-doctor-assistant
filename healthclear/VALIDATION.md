@@ -1,3 +1,13 @@
+# Supabase update verification — 21 October 2026
+
+- 26 automated tests pass: 16 existing medical/report tests and 10 Supabase adapter/API tests with mocked responses.
+- Regular HealthClear 1.3 APK built; v2/v3 signatures and ZIP alignment verified. Development APK rebuilt separately.
+- Added a live Supabase test for two-user isolation, anonymous denial, forged ownership and owner deletion. Not run: the user is creating their Supabase project and credentials are not available.
+- New cloud screens have not been visually verified: the browser automation kernel failed to start because of a Windows sandbox setup error. Target-phone installation and end-to-end cloud interaction remain unverified.
+- No live AI provider verification or production deployment is claimed. Existing phone/emulator limitations below remain relevant.
+
+## Previous verification record
+
 # Verification — 14 October 2026
 
 ## Passed

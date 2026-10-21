@@ -1,1 +1,11 @@
-{"name":"healthclear","private":true,"type":"module","scripts":{"start":"node server.mjs","backend":"node --env-file-if-exists=backend/.env backend/server.mjs","test":"node --test tests.mjs backend/tests.mjs"}}
+{
+  "name": "healthclear",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "backend": "node --env-file-if-exists=backend/.env backend/server.mjs",
+    "test": "node --test tests.mjs backend/tests.mjs backend/cloud.tests.mjs",
+    "test:supabase": "node --env-file-if-exists=backend/.env backend/supabase.integration.mjs"
+  }
+}

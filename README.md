@@ -1,3 +1,7 @@
+# Supabase update — HealthClear 1.3
+
+Optional cloud accounts and private saved report text are implemented. Setup: [Supabase guide](healthclear/supabase/README.md). Supabase project credentials and migration are required; they are not bundled. Install the new `HealthClear-1.3.apk` from the releases folder.
+
 # HealthClear for Android
 
 Created by **Punit Badyal** · [GitHub](https://github.com/punitbadyal01-blip)
@@ -6,7 +10,7 @@ HealthClear explains **written** blood-test, X-ray and ultrasound reports in Eng
 
 ## Install on a phone
 
-[Download HealthClear 1.2 APK](healthclear/releases/HealthClear-1.2.apk?raw=true)
+[Download HealthClear 1.3 APK](healthclear/releases/HealthClear-1.3.apk?raw=true)
 
 Requires Android 8.0 or newer. Download the APK itself (not the repository ZIP or an HTML page), then open it on your phone. If an Android installation error appears, keep the exact message. The USB install task below gives a more useful diagnostic without erasing existing app data.
 

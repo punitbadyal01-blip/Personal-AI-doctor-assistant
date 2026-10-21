@@ -1,3 +1,4 @@
+import {createCloud,CloudError} from './cloud.mjs';
 import http from 'node:http';
 import { timingSafeEqual } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
@@ -75,7 +76,7 @@ export function createProvider({apiKey,model,fetchImpl=fetch}){
   return validateResult(kind,parsed,body);
  };
 }
-export function createServer({accessToken,provider,configured=true}){
+export function createServer({accessToken,provider,configured=true,cloud=createCloud({})}){
  let active=0,windowStart=Date.now(),requests=0;
  const respond=(res,status,data)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(JSON.stringify(data));};
  return http.createServer(async(req,res)=>{
@@ -85,10 +86,10 @@ export function createServer({accessToken,provider,configured=true}){
   if(req.url==='/health'&&req.method==='GET'){respond(res,200,{status:'ok'});return;}
   const received=Buffer.from(req.headers.authorization||''),expected=Buffer.from(`Bearer ${accessToken||''}`);
   if(!accessToken||accessToken.length<32||received.length!==expected.length||!timingSafeEqual(received,expected)){respond(res,401,{error:'Invalid backend access token.'});return;}
-  if(req.url==='/v1/status'&&req.method==='POST'){respond(res,200,{configured,retention:'This backend does not persist reports. OpenAI processing and provider retention apply; store:false does not guarantee zero retention.'});req.resume();return;}
-  const kind={'/v1/ocr':'ocr','/v1/explain':'explain','/v1/chat':'chat'}[req.url];
+  if(req.url==='/v1/status'&&req.method==='POST'){respond(res,200,{configured,cloudConfigured:cloud.ready,retention:'Analysis is not saved automatically. Explicit cloud saves persist reviewed text in Supabase until deletion. OpenAI processing and provider retention apply; store:false does not guarantee zero retention.'});req.resume();return;}
+  const kind={'/v1/ocr':'ocr','/v1/explain':'explain','/v1/chat':'chat','/v1/cloud':'cloud'}[req.url];
   if(!kind||req.method!=='POST'){respond(res,404,{error:'Not found.'});return;}
-  if(!configured){respond(res,503,{error:'Backend provider credentials/model are not configured.'});req.resume();return;}
+  if(!configured&&kind!=='cloud'){respond(res,503,{error:'Backend provider credentials/model are not configured.'});req.resume();return;}
   if(Date.now()-windowStart>600000){windowStart=Date.now();requests=0;}
   if(active>=2||requests>=60){respond(res,429,{error:'Service is busy. Please wait and retry.'});req.resume();return;}
   active++;requests++;
@@ -98,16 +99,18 @@ export function createServer({accessToken,provider,configured=true}){
    for await(const chunk of req){size+=chunk.length;if(size>limit){respond(res,413,{error:'Request is too large.'});req.resume();return;}chunks.push(chunk);}
    let body;try{body=JSON.parse(Buffer.concat(chunks).toString('utf8'));}catch{throw new ApiError(400,'Invalid JSON.');}
    chunks=[];
+   if(!body||typeof body!=='object'||Array.isArray(body))throw new ApiError(400,'JSON object required.');
+   if(kind==='cloud'){respond(res,200,await cloud.run(body));return;}
    if(body?.consent!==true)throw new ApiError(400,'Explicit processing consent is required.');
    if(kind==='ocr')validateUpload(body);else{reportLines(body.text);if(!['en','hi','te'].includes(body.language))throw new ApiError(400,'Unsupported language.');if(kind==='chat')requireString(body.question,500);}
    respond(res,200,validateResult(kind,await provider(kind,body),body));
-  }catch(e){if(!res.headersSent)respond(res,e instanceof ApiError?e.status:500,{error:e instanceof ApiError?e.message:'Request failed. Please retry.'});}
+  }catch(e){if(!res.headersSent)respond(res,(e instanceof ApiError||e instanceof CloudError)?e.status:500,{error:(e instanceof ApiError||e instanceof CloudError)?e.message:'Request failed. Please retry.'});}
   finally{active--;}
  });
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
  const {OPENAI_API_KEY:apiKey,OPENAI_MODEL:model,HEALTHCLEAR_ACCESS_TOKEN:accessToken}=process.env;
  if(!accessToken||accessToken.length<32){console.error('Set HEALTHCLEAR_ACCESS_TOKEN to a random value at least 32 characters long.');process.exit(1);}
- const server=createServer({accessToken,provider:createProvider({apiKey,model}),configured:!!(apiKey&&model)});server.requestTimeout=100000;server.headersTimeout=15000;
+ const server=createServer({accessToken,provider:createProvider({apiKey,model}),configured:!!(apiKey&&model),cloud:createCloud({url:process.env.SUPABASE_URL,key:process.env.SUPABASE_PUBLISHABLE_KEY,adminKey:process.env.SUPABASE_SECRET_KEY})});server.requestTimeout=100000;server.headersTimeout=15000;
  server.listen(Number(process.env.PORT||8080),process.env.HOST||'127.0.0.1',()=>console.log('HealthClear backend is listening. No report content is logged.'));
 }

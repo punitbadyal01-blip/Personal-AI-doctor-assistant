@@ -1,3 +1,5 @@
+For optional cloud accounts and private report history, follow [Supabase setup](../supabase/README.md).
+
 # Backend setup and phone testing
 
 ## 1. Open in VS Code
@@ -51,7 +53,7 @@ Build the Dockerfile from this directory, or deploy `server.mjs` as a Node servi
     docker build -t healthclear-backend .
     docker run --env-file .env -e HOST=0.0.0.0 -p 127.0.0.1:8080:8080 healthclear-backend
 
-Configure your HTTPS reverse proxy/hosting service separately. HTTPS certificates must be trusted by Android; the app does not disable certificate checks or follow redirects with credentials. Use the regular `HealthClear-1.2.apk` with the HTTPS origin and backend token.
+Configure your HTTPS reverse proxy/hosting service separately. HTTPS certificates must be trusted by Android; the app does not disable certificate checks or follow redirects with credentials. Use the regular `HealthClear-1.3.apk` with the HTTPS origin and backend token.
 
 This backend is intended for a personal prototype or a small controlled test. It has token authentication, a bounded request body, a 2-request concurrency cap and 60-request/10-minute cap per process. Multi-user deployment needs individual identities, per-user quotas, monitoring that avoids medical content, clinical review, and appropriate data-processing agreements. There is no server report database or account system.
 
