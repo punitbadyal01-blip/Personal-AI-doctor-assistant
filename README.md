@@ -12,7 +12,9 @@ HealthClear explains **written** blood-test, X-ray and ultrasound reports in Eng
 
 ## Install on a phone
 
-[Download HealthClear 1.4 APK](healthclear/releases/HealthClear-1.4.apk?raw=true)
+[Download HealthClear 1.4 APK](https://github.com/punitbadyal01-blip/Personal-AI-doctor-assistant/releases/download/v1.4/HealthClear-1.4.apk)
+
+If a phone’s in-app browser cannot download the file, open the [GitHub release page](https://github.com/punitbadyal01-blip/Personal-AI-doctor-assistant/releases/tag/v1.4) in Chrome and choose `HealthClear-1.4.apk` under Assets.
 
 Requires Android 8.0 or newer. Download the APK itself (not the repository ZIP or an HTML page), then open it on your phone. If an Android installation error appears, keep the exact message. The USB install task below gives a more useful diagnostic without erasing existing app data.
 
