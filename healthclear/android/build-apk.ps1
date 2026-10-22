@@ -17,7 +17,7 @@ Run-Checked (Join-Path $toolRoot 'aapt2.exe') @('compile','--dir',(Join-Path $an
 $manifest = [IO.File]::ReadAllText((Join-Path $androidRoot 'app/src/main/AndroidManifest.xml')).Replace('<manifest ', '<manifest package="com.healthclear.app" ')
 if ($Development) { $manifest=$manifest.Replace('<application ', '<application android:debuggable="true" android:networkSecurityConfig="@xml/development_network" ') }
 [IO.File]::WriteAllText((Join-Path $buildRoot 'AndroidManifest.xml'),$manifest)
-Run-Checked (Join-Path $toolRoot 'aapt2.exe') @('link','-o',(Join-Path $buildRoot 'unsigned.apk'),'--manifest',(Join-Path $buildRoot 'AndroidManifest.xml'),'-I',$platformJar,'-A',(Join-Path $projectRoot 'dist'),'--min-sdk-version','26','--target-sdk-version','36','--version-code','4','--version-name','1.3',(Join-Path $buildRoot 'resources.zip'))
+Run-Checked (Join-Path $toolRoot 'aapt2.exe') @('link','-o',(Join-Path $buildRoot 'unsigned.apk'),'--manifest',(Join-Path $buildRoot 'AndroidManifest.xml'),'-I',$platformJar,'-A',(Join-Path $projectRoot 'dist'),'--min-sdk-version','26','--target-sdk-version','36','--version-code','5','--version-name','1.4',(Join-Path $buildRoot 'resources.zip'))
 $sources = @(Get-ChildItem (Join-Path $androidRoot 'app/src/main/java') -Filter '*.java' -Recurse | ForEach-Object FullName)
 Run-Checked (Join-Path $JavaPath 'bin/javac.exe') (@('-encoding','UTF-8','--release','17','-classpath',$platformJar,'-d',(Join-Path $buildRoot 'classes')) + $sources)
 Run-Checked (Join-Path $JavaPath 'bin/jar.exe') @('cf',(Join-Path $buildRoot 'classes.jar'),'-C',(Join-Path $buildRoot 'classes'),'.')
@@ -30,7 +30,7 @@ $apk = Join-Path $projectRoot $(if ($Development) { 'releases/HealthClear-dev.ap
 Run-Checked (Join-Path $JavaPath 'bin/java.exe') @('-jar',(Join-Path $toolRoot 'lib/apksigner.jar'),'sign','--ks',$key,'--ks-pass','pass:android','--key-pass','pass:android','--v1-signing-enabled','true','--v2-signing-enabled','true','--v3-signing-enabled','true','--out',$apk,(Join-Path $buildRoot 'aligned.apk'))
 Run-Checked (Join-Path $JavaPath 'bin/java.exe') @('-jar',(Join-Path $toolRoot 'lib/apksigner.jar'),'verify','--verbose',$apk)
 Run-Checked (Join-Path $toolRoot 'zipalign.exe') @('-c','4',$apk)
-if (-not $Development) { Copy-Item -LiteralPath $apk -Destination (Join-Path $projectRoot 'releases/HealthClear-1.3.apk') -Force }
+if (-not $Development) { Copy-Item -LiteralPath $apk -Destination (Join-Path $projectRoot 'releases/HealthClear-1.4.apk') -Force }
 $hashLines = Get-ChildItem (Join-Path $projectRoot 'releases') -Filter '*.apk' | ForEach-Object { "{0}  {1}" -f (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLower(), $_.Name }
 [IO.File]::WriteAllLines((Join-Path $projectRoot 'releases/SHA256SUMS.txt'),$hashLines)
 Write-Output "APK: $apk"

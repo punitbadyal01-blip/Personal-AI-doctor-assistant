@@ -1,10 +1,17 @@
-# Supabase update verification — 21 October 2026
+# Supabase update verification — 22 October 2026
 
-- 26 automated tests pass: 16 existing medical/report tests and 10 Supabase adapter/API tests with mocked responses.
-- Regular HealthClear 1.3 APK built; v2/v3 signatures and ZIP alignment verified. Development APK rebuilt separately.
-- Added a live Supabase test for two-user isolation, anonymous denial, forged ownership and owner deletion. Not run: the user is creating their Supabase project and credentials are not available.
+- 33 automated tests pass: 16 existing medical/report tests and 17 Supabase adapter/API tests with mocked responses, including Google PKCE flow and invalid configuration handling.
+- Regular HealthClear 1.4 APK built; v2/v3 signatures and ZIP alignment verified. Development APK rebuilt separately.
+- Live Supabase verification passed: owner read/insert/delete, two-user isolation, anonymous denial, forged-ownership denial and denial of another user's deletion. Temporary fictional test users were removed after the test.
+- Live backend-to-Supabase verification passed: sign-in, explicit saving consent, save/list/open/delete, deleted-report denial, account deletion with report cascading, and rejection of the deleted account session. The temporary backend verification account was removed.
+- Supabase project configuration is stored only in the ignored local backend/.env. Configuration readiness reflects key presence/type; the live tests above separately verified connectivity and access policies.
 - New cloud screens have not been visually verified: the browser automation kernel failed to start because of a Windows sandbox setup error. Target-phone installation and end-to-end cloud interaction remain unverified.
+- Connected Supabase security advisor returned no issues. Database catalog checks confirmed RLS enabled, owner-only policies, cascading account deletion, no anonymous SELECT grant and no authenticated UPDATE grant.
+- Release APK assets match the current source byte for byte; Google sign-in bridge is packaged. APK checksums, v2/v3 signatures and ZIP alignment verified.
+- Phone installer now selects version 1.4 for regular installs and reports launch timeouts separately from installation success. VS Code Tests includes the cloud suite.
 - No live AI provider verification or production deployment is claimed. Existing phone/emulator limitations below remain relevant.
+
+Google provider is disabled on the connected project. Google OAuth consent, external-browser return and phone installation remain unverified. No phone was attached during the 1.4 build. Provider activation instructions are in supabase/GOOGLE_SIGN_IN.md.
 
 ## Previous verification record
 

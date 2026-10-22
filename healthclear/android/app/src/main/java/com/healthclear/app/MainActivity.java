@@ -21,6 +21,8 @@ public final class MainActivity extends Activity {
  private static final String ORIGIN="https://appassets.androidplatform.net";
  private static final int PICK=10,CAMERA=11,EXPORT=12,MAX=10*1024*1024;
  private WebView web;
+ private boolean googleSignInPending=false;
+ private long googleSignInStarted=0;
  private TextToSpeech tts;
  private boolean ttsReady=false,paused=false;
  private String spoken="",exportText="",speechLanguage="en";
@@ -36,6 +38,7 @@ public final class MainActivity extends Activity {
   WebSettings s=web.getSettings();s.setJavaScriptEnabled(true);s.setDomStorageEnabled(true);s.setAllowFileAccess(false);s.setAllowContentAccess(false);s.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);s.setCacheMode(WebSettings.LOAD_NO_CACHE);
   CookieManager.getInstance().setAcceptCookie(false);
   web.setWebViewClient(new WebViewClient(){
+   @Override public void onPageFinished(WebView v,String url){if((ORIGIN+"/assets/index.html").equals(url))handleGoogleCallback(getIntent());}
    @Override public boolean shouldOverrideUrlLoading(WebView v,WebResourceRequest request){Uri u=request.getUrl();if(request.isForMainFrame()&&"https://github.com/punitbadyal01-blip".equals(u.toString())){try{startActivity(new Intent(Intent.ACTION_VIEW,u));}catch(ActivityNotFoundException e){message("No browser is available. Visit github.com/punitbadyal01-blip on another device.");}return true;}return !ORIGIN.equals(u.getScheme()+"://"+u.getHost());}
    @Override public WebResourceResponse shouldInterceptRequest(WebView v,WebResourceRequest r){Uri u=r.getUrl();if("https".equals(u.getScheme())&&"appassets.androidplatform.net".equals(u.getHost())){String p=u.getPath();if(p!=null&&p.startsWith("/assets/")&&!p.contains("..")){String file=p.substring(8);if(Arrays.asList("index.html","app.js","services.js","style.css","api.js").contains(file))try{String type=file.endsWith(".html")?"text/html":file.endsWith(".css")?"text/css":"text/javascript";return new WebResourceResponse(type,"UTF-8",getAssets().open(file));}catch(IOException ignored){}}}return new WebResourceResponse("text/plain","UTF-8",403,"Blocked",Collections.emptyMap(),new ByteArrayInputStream(new byte[0]));}
   });
@@ -47,6 +50,19 @@ public final class MainActivity extends Activity {
  }
  private void js(String script){runOnUiThread(()->{if(!isFinishing()&&!isDestroyed())web.evaluateJavascript(script,null);});}
  private void message(String text){js("window.healthclearNativeError?.("+JSONObject.quote(text)+")");}
+ @Override protected void onNewIntent(Intent intent){super.onNewIntent(intent);setIntent(intent);handleGoogleCallback(intent);}
+ private void googleResult(String code,String error){js("window.healthclearGoogleReturn?.("+JSONObject.quote(code)+","+JSONObject.quote(error)+")");}
+ private void handleGoogleCallback(Intent intent){
+  Uri u=intent==null?null:intent.getData();
+  if(u==null||!"com.healthclear.app".equals(u.getScheme())||!"auth".equals(u.getHost())||!"/callback".equals(u.getPath())||u.getPort()!=-1||u.getUserInfo()!=null)return;
+  intent.setData(null);
+  boolean pending=googleSignInPending&&SystemClock.elapsedRealtime()-googleSignInStarted<600000;googleSignInPending=false;
+  if(!pending){googleResult("","Sign-in expired or interrupted. Start Google sign-in again.");return;}
+  if(u.getFragment()!=null||u.getQueryParameter("error")!=null){googleResult("","Google sign-in was cancelled or could not finish. Please retry.");return;}
+  String code=u.getQueryParameter("code");
+  if(code==null||!code.matches("[A-Za-z0-9_-]{10,2048}")){googleResult("","Invalid sign-in callback. Please retry.");return;}
+  googleResult(code,"");
+ }
  private boolean speechMatches(String id){return id!=null&&id.startsWith(speechGeneration+":");}
  private int queueSpeech(){int offset=spokenOffset;boolean first=true;while(offset<spoken.length()){int end=Math.min(spoken.length(),offset+2500);if(end<spoken.length()){int boundary=spoken.lastIndexOf('\n',end);if(boundary>offset+200)end=boundary+1;else{boundary=spoken.lastIndexOf(' ',end);if(boundary>offset+200)end=boundary+1;}}String id=speechGeneration+":"+offset+(end==spoken.length()?":last":"");int status=tts.speak(spoken.substring(offset,end),first?TextToSpeech.QUEUE_FLUSH:TextToSpeech.QUEUE_ADD,null,id);if(status!=TextToSpeech.SUCCESS)return status;first=false;offset=end;}return TextToSpeech.SUCCESS;}
  private void audioStatus(String text){js("window.healthclearAudioStatus?.("+JSONObject.quote(text)+")");}
@@ -54,6 +70,16 @@ public final class MainActivity extends Activity {
  private void releaseReport(){fileGeneration++;if(pdf!=null){pdf.close();pdf=null;}cleanTemporaryFiles();}
  private boolean isDevelopment(){return (getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE)!=0;}
  public final class Bridge {
+  @JavascriptInterface public void openGoogleSignIn(String address){runOnUiThread(()->{
+   try{
+    Uri u=Uri.parse(address);String challenge=u.getQueryParameter("code_challenge");
+    if(!"https".equals(u.getScheme())||u.getHost()==null||!u.getHost().matches("[a-z0-9-]+\\.supabase\\.co")||u.getPort()!=-1||u.getUserInfo()!=null||u.getFragment()!=null||!"/auth/v1/authorize".equals(u.getPath())||!"google".equals(u.getQueryParameter("provider"))||!"com.healthclear.app://auth/callback".equals(u.getQueryParameter("redirect_to"))||!"s256".equals(u.getQueryParameter("code_challenge_method"))||challenge==null||!challenge.matches("[A-Za-z0-9_-]{43}"))throw new IllegalArgumentException();
+    googleSignInPending=true;googleSignInStarted=SystemClock.elapsedRealtime();
+    Intent browser=new Intent(Intent.ACTION_VIEW,u);browser.addCategory(Intent.CATEGORY_BROWSABLE);startActivity(browser);
+   }catch(ActivityNotFoundException e){googleSignInPending=false;googleResult("","No browser is available for Google sign-in. Install a browser or use email sign-in.");}
+   catch(Exception e){googleSignInPending=false;googleResult("","Could not start secure Google sign-in. Please retry.");}
+  });}
+  @JavascriptInterface public void cancelGoogleSignIn(){runOnUiThread(()->googleSignInPending=false);}
   @JavascriptInterface public boolean localDevelopment(){return isDevelopment();}
   @JavascriptInterface public String getHistory(){return SecureStore.read(MainActivity.this);}
   @JavascriptInterface public boolean saveHistory(String json){return SecureStore.save(MainActivity.this,json);}

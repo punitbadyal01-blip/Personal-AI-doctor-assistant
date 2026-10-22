@@ -1,4 +1,6 @@
-# Supabase setup for HealthClear 1.3
+For Google quick sign-in, see [Google setup](GOOGLE_SIGN_IN.md). No Firebase is used.
+
+# Supabase setup for HealthClear 1.4
 
 Cloud integration is implemented, but no Supabase project or credentials are included. You must create your project and apply the migration before cloud accounts work. The Android app still supports fictional samples offline and local encrypted history.
 
@@ -21,7 +23,7 @@ Cloud integration is implemented, but no Supabase project or credentials are inc
 
 ## Phone installation
 
-Use `releases/HealthClear-1.3.apk` for a deployed HTTPS backend. GitHub hosts the APK and source; it does not run your Node backend or Supabase project. For local USB testing, use `HealthClear-dev.apk` and the VS Code install task with `adb reverse tcp:8080 tcp:8080`. The local development address is `http://127.0.0.1:8080`.
+Use `releases/HealthClear-1.4.apk` for a deployed HTTPS backend. GitHub hosts the APK and source; it does not run your Node backend or Supabase project. For local USB testing, use `HealthClear-dev.apk` and the VS Code install task with `adb reverse tcp:8080 tcp:8080`. The local development address is `http://127.0.0.1:8080`.
 
 ## Data and access
 

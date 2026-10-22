@@ -48,20 +48,21 @@ Accept the processing notice before choosing a personal report. The device sends
 
 ## 4. Deploy for use without USB
 
-Build the Dockerfile from this directory, or deploy `server.mjs` as a Node service with the environment variables above. Bind `HOST=0.0.0.0` inside the hosting environment. Put the service behind a valid HTTPS endpoint. Set ingress limits to at least 14 MB and request timeouts above 100 seconds. Disable body/header logging, debug traces and request payload capture in the hosting platform. Do not put the provider key or access token in URLs.
+Build the Dockerfile from this directory, or deploy `server.mjs` and `cloud.mjs` together as a Node service with the environment variables above. Bind `HOST=0.0.0.0` inside the hosting environment. Put the service behind a valid HTTPS endpoint. Set ingress limits to at least 14 MB and request timeouts above 100 seconds. Disable body/header logging, debug traces and request payload capture in the hosting platform. Do not put the provider key or access token in URLs.
 
     docker build -t healthclear-backend .
     docker run --env-file .env -e HOST=0.0.0.0 -p 127.0.0.1:8080:8080 healthclear-backend
 
-Configure your HTTPS reverse proxy/hosting service separately. HTTPS certificates must be trusted by Android; the app does not disable certificate checks or follow redirects with credentials. Use the regular `HealthClear-1.3.apk` with the HTTPS origin and backend token.
+Configure your HTTPS reverse proxy/hosting service separately. HTTPS certificates must be trusted by Android; the app does not disable certificate checks or follow redirects with credentials. Use the regular `HealthClear-1.4.apk` with the HTTPS origin and backend token.
 
-This backend is intended for a personal prototype or a small controlled test. It has token authentication, a bounded request body, a 2-request concurrency cap and 60-request/10-minute cap per process. Multi-user deployment needs individual identities, per-user quotas, monitoring that avoids medical content, clinical review, and appropriate data-processing agreements. There is no server report database or account system.
+This backend is intended for a personal prototype or a small controlled test. It has token authentication, a bounded request body, a 2-request concurrency cap and 60-request/10-minute cap per process. Multi-user deployment needs individual identities, per-user quotas, monitoring that avoids medical content, clinical review, and appropriate data-processing agreements. Supabase supplies optional user accounts and explicitly saved report text; the shared backend access token remains required for this controlled deployment.
 
 ## API
 
-All POST routes require `Authorization: Bearer <backend token>`. Except `/v1/status`, requests require `consent:true`.
+All POST routes require `Authorization: Bearer <backend token>`. Analysis routes require `consent:true`. Cloud saves instead require `saveConsent:true`; account operations use their corresponding confirmation and session fields.
 
-- `POST /v1/status`: provider configuration status and retention notice.
+- `POST /v1/status`: AI/Supabase configuration status and retention notice.
+- `POST /v1/cloud`: email sign-up/sign-in, Google PKCE start/exchange, report list/save/open/delete, logout and confirmed account deletion. Report operations use the caller's Supabase user session. See the Supabase guides for setup.
 - `POST /v1/ocr`: `{mime, base64, consent}`; returns classified document type and extracted lines with page/uncertainty. PDFs use inline file data; images use image inputs.
 - `POST /v1/explain`: `{text, language, consent}`; returns findings, follow-up claims with exact source quotes and zero-based line references, general definitions and doctor questions.
 - `POST /v1/chat`: `{text, language, question, consent}`; returns cited claims and whether evidence is sufficient.
@@ -70,7 +71,7 @@ Only `en`, `hi`, `te` are accepted. Missing/uncertain text, invalid references a
 
 ## Privacy
 
-Requests use the provider Responses API with `store:false`; that does not guarantee zero provider retention. This server does not persist medical content or log bodies. Provider abuse-monitoring retention and exceptions still apply; review your provider settings and agreements. Uploaded content is treated as data, not instructions. No training consent collection is implemented. Android saves report text/explanation only on explicit Save, encrypted with Android Keystore; backup is disabled. Original files are temporary and are not in saved history. The app can delete local history. Export writes a plaintext summary to a location explicitly chosen by the user.
+Requests use the provider Responses API with `store:false`; that does not guarantee zero provider retention. Analysis is transient and request bodies are not logged. Explicit cloud saves persist reviewed report text in Supabase until deleted; provider backup retention applies. Provider abuse-monitoring retention and exceptions still apply; review your provider settings and agreements. Uploaded content is treated as data, not instructions. No training consent collection is implemented. Android saves report text/explanation only on explicit Save, encrypted with Android Keystore; backup is disabled. Original files are temporary and are not in saved history. The app can delete local history. Export writes a plaintext summary to a location explicitly chosen by the user.
 
 Official implementation references: [File inputs](https://developers.openai.com/api/docs/guides/file-inputs), [Structured outputs](https://developers.openai.com/api/docs/guides/structured-outputs), [Data controls and retention](https://developers.openai.com/api/docs/guides/your-data).
 
@@ -78,7 +79,7 @@ Official implementation references: [File inputs](https://developers.openai.com/
 
 From `healthclear`: `npm test`. Automated provider tests use mocked responses; they incur no API charges and do not establish live clinical accuracy.
 
-`fixture-server.mjs` is ONLY for automated emulator tests and produces fictional outputs. Do not deploy it, run it as the normal backend, or send personal reports to it. The production Dockerfile includes only `server.mjs`.
+`fixture-server.mjs` is ONLY for automated emulator tests and produces fictional outputs. Do not deploy it, run it as the normal backend, or send personal reports to it. The production Dockerfile includes `server.mjs` and `cloud.mjs`, and excludes the fictional fixture service.
 
 - **App not installed:** run the USB install task to capture Android’s exact error. Do not uninstall an existing app unless you accept losing its local data.
 - **Connection failed:** backend process, URL, USB authorization, port forwarding and token must match. Normal APK requires HTTPS; USB HTTP needs the development APK.

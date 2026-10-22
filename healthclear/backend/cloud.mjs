@@ -1,7 +1,8 @@
-import {randomUUID} from 'node:crypto';
+import {randomUUID,randomBytes,createHash} from 'node:crypto';
 export class CloudError extends Error {constructor(status,message){super(message);this.status=status;}}
 export function createCloud({url,key,adminKey,fetchImpl=fetch}){
- const ready=!!(url&&key&&adminKey);
+ const invalidKeys=!!(key&&adminKey&&(key===adminKey||adminKey.startsWith('sb_publishable_')||key.startsWith('sb_secret_')));
+ const ready=!!(url&&key&&adminKey)&&!invalidKeys;
  if(url&&!/^https:\/\/[a-z0-9-]+\.supabase\.co$/.test(url))throw Error('SUPABASE_URL must be the HTTPS project origin.');
  async function request(path,{token=key,method='GET',body,admin=false}={}){
   let response;try{response=await fetchImpl(url+path,{method,headers:{apikey:admin?adminKey:key,...((admin?adminKey:token)?.startsWith('sb_')?{}:{Authorization:'Bearer '+(admin?adminKey:token)}),'Content-Type':'application/json',Prefer:'return=representation'},body:body===undefined?undefined:JSON.stringify(body),signal:AbortSignal.timeout(15000)});}catch{throw new CloudError(503,'Cloud service unavailable. Please retry.');}
@@ -10,8 +11,23 @@ export function createCloud({url,key,adminKey,fetchImpl=fetch}){
   const text=await response.text();try{return text?JSON.parse(text):null;}catch{throw new CloudError(502,'Invalid cloud response.');}
  }
  return {ready,async run(body){
+  if(invalidKeys)throw new CloudError(503,'Supabase key configuration is invalid. The backend needs a publishable key and a separate secret key.');
   if(!ready)throw new CloudError(503,'Supabase is not configured on this backend.');
   const {action,session}=body;
+  if(action==='google-start'){
+   const settings=await request('/auth/v1/settings');
+   if(settings.external?.google!==true)throw new CloudError(503,'Google sign-in is not enabled yet. You can sign in with email.');
+   const verifier=randomBytes(32).toString('base64url');
+   const authorize=new URL(url+'/auth/v1/authorize');
+   authorize.search=new URLSearchParams({provider:'google',redirect_to:'com.healthclear.app://auth/callback',code_challenge:createHash('sha256').update(verifier).digest('base64url'),code_challenge_method:'s256'}).toString();
+   return {url:authorize.href,verifier};
+  }
+  if(action==='google-exchange'){
+   if(typeof body.code!=='string'||!/^[A-Za-z0-9_-]{10,2048}$/.test(body.code)||typeof body.verifier!=='string'||!/^[A-Za-z0-9_-]{43,128}$/.test(body.verifier))throw new CloudError(400,'Invalid sign-in callback. Please start Google sign-in again.');
+   const data=await request('/auth/v1/token?grant_type=pkce',{method:'POST',body:{auth_code:body.code,code_verifier:body.verifier}});
+   if(typeof data.access_token!=='string'||!data.user?.id)throw new CloudError(502,'Google sign-in could not be verified. Please retry.');
+   return {session:data.access_token,email:data.user.email||'',message:'Signed in with Google.'};
+  }
   if(['signup','login'].includes(action)){
    if(typeof body.email!=='string'||body.email.length>254||!/^\S+@\S+\.\S+$/.test(body.email)||typeof body.password!=='string'||body.password.length<12||body.password.length>128)throw new CloudError(400,'Enter an email and password of 12–128 characters.');
    const data=await request(action==='signup'?'/auth/v1/signup':'/auth/v1/token?grant_type=password',{method:'POST',body:{email:body.email,password:body.password}});
