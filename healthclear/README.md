@@ -1,50 +1,40 @@
-# Supabase update — HealthClear 1.4
+# HealthClear architecture and operation
 
-Optional cloud accounts and private saved report text are implemented. Setup: [Supabase guide](supabase/README.md). Supabase project credentials and migration are required; they are not bundled. Install the new `HealthClear-1.4.apk` from the releases folder.
+HealthClear 1.5 keeps the existing stack: Android Java shell, bundled vanilla JavaScript/CSS, Node HTTP backend and Supabase Postgres/Auth. There are no runtime npm dependencies. Playwright is a pinned development-only dependency with a lockfile.
 
-# HealthClear 1.4
+## Modules
 
-Installable Android app by Punit Badyal, with a local interface and native Android integrations. Android 8+; compile/target SDK 36. Build and phone-testing instructions are in [backend/SETUP.md](backend/SETUP.md). Open the root `HealthClear.code-workspace` in VS Code.
+- `dist/app.js`: screen orchestration and consent-aware report/account workflows.
+- `dist/ui.js`: shared icons, controls, text escaping, focus-managed confirmations and localized form validation.
+- `dist/i18n.js`, `dist/locale-{en,hi,te}.js`: complete interface catalogs, safe preferences, theme application, localized dates and errors. Add a complete catalog and language metadata before exposing another language. RTL languages are not shipped.
+- `dist/languages.js`, `dist/language-picker.js`: shared report-language validation, 184 base language choices, regional tags and searchable picker with RTL handling.
+- `server.mjs`: laptop-only gateway with automatic connection, strict local Host/Origin checks and no exposed backend token.
+- `dist/history.js`: validates whole saved collections, preserving corrupt data instead of silently dropping entries.
+- `dist/api.js`: backend configuration, native/browser transport, cancellation on connection changes, session expiry, exact quotes and conservative range formatting.
+- `dist/services.js`: explicitly fictional sample reports and medical explanation text in three languages, file validation and exact audio composition. The active personal-report OCR adapter is `api.extract`, backed by the server.
+- `backend/server.mjs`: bounded, authenticated analysis endpoints, processing consent, source/output validation, exact-origin CORS and sanitized failures.
+- `backend/cloud.mjs`: Supabase Auth, PKCE Google/recovery exchanges, user-JWT report operations, validated search/sort/pagination, idempotent saves and confirmed account deletion.
+- `android/.../MainActivity.java`: private camera/document/PDF handling, API bridge, auth links, offline TTS, appearance/insets and summary export.
+- `android/.../SecureStore.java`: Android Keystore AES-GCM encryption for explicitly saved local history.
 
-## Implemented
+## Data flow and retention
 
-- JPG/PNG/PDF selection and delegated camera capture, 10 MB validation and original preview.
-- Native PDF page rendering; editable extracted text with an explicit verification gate.
-- Authenticated server-side OpenAI adapters for written-report extraction, source-linked explanation, English/Hindi/Telugu output and report questions. Provider keys remain on the server.
-- Unreadable-text markers, source-line navigation, exact original quotes/measurements and conservative reference-range labels for explicitly formatted numeric ranges with matching units.
-- Offline Android speech, pause/resume, replay and speed; long explanations are chunked without adding claims. Audio reads the displayed explanation and source quotes.
-- No-save default; explicit Android Keystore-encrypted history for reviewed text and explanations; original files not persisted in history. Deletion and file export.
-- Native Back behavior, responsive navigation and Punit Badyal’s developer section.
-- Clear separation of fictional examples from configured live processing. No fabricated fallback when a service fails.
+No-save is the default. Personal files require processing consent and text verification before analysis. OCR output preserves uncertain characters as `[unreadable]`; the user must obtain a clearer report instead of guessing. Actual scan images without a written report are refused. Claims link to exact source lines, and values/units remain in their original form.
 
-## Configuration still required for real AI
+Explicit local saves keep reviewed text/explanations encrypted on Android. Browser preview stores only sample references. Cloud saves keep reviewed text, filename, language and timestamp under owner-only RLS; original files and generated explanations are not stored in Supabase. Cloud report reopening requires new processing consent for new AI requests. Account deletion revokes sessions and cascades owned report deletion. Provider backups follow the project's retention settings.
 
-Set the server's `OPENAI_API_KEY` and `OPENAI_MODEL`, run/deploy the included backend, then connect the app in Settings. This repository ships no AI credentials. Without configuration, examples work offline and personal files can be viewed/reviewed but cannot receive live AI analysis.
+Backend and user-session tokens stay in memory. API keys and Supabase admin secrets remain server-side. Connection changes cancel pending client promises, and stale responses cannot establish a replacement session. Passwords/tokens/report text are not logged. OpenAI processing uses `store:false`; provider retention still applies.
 
-Optional Supabase accounts support private cloud saving of reviewed report text, report deletion and account deletion. Cloud saving always needs explicit confirmation. Original files and generated explanations remain outside the cloud database. Email account and report access passed live verification; Google provider activation is still pending. Local encrypted history is separate. This is a personal prototype, not a clinically validated product. No regulatory or medical-certification claim is made. OCR/model outputs and translation need human review. Numeric range badges are only computed when the exact explicit format can be parsed safely; other values retain their source quotes without an automatic range classification.
+Translations are cached only in the current report's memory and are discarded when leaving it. Android and browser playback select local voices; missing voices produce a readable fallback. Exported summaries are plaintext copies deliberately chosen by the user.
 
 ## Build
 
 From the repository root:
 
-    powershell -File healthclear/android/build-apk.ps1 -SdkPath D:/android -JavaPath "C:/Program Files/Java/jdk-24"
+```powershell
+powershell -File healthclear/android/build-apk.ps1 -SdkPath D:/android -JavaPath "C:/Program Files/Java/jdk-24"
+```
 
-For USB backend testing add `-Development`; it writes `HealthClear-dev.apk` and only permits loopback HTTP at `http://127.0.0.1:8080`. The regular `HealthClear-1.4.apk` requires HTTPS. Both use the same local development signing key so updates can retain app data. The key remains ignored under `android/build-direct`; preserve it privately. This is not Play Store release signing.
+Add `-Development` for `HealthClear-dev.apk`. The regular `HealthClear-1.5.apk` requires HTTPS; the development APK permits only `http://127.0.0.1:8080`. Preserve the ignored signing key privately to retain update compatibility. This key is for development/testing, not a Play Store production signing setup.
 
-Open `android/` in Android Studio for the Gradle project (AGP 8.13, compile SDK 36, Java 17 language level). VS Code uses the supplied standalone SDK build script without requiring Gradle downloads. `releases/SHA256SUMS.txt` records the APK hashes.
-
-## Code map
-
-- `dist/app.js`, `style.css`: screens, review flow, history and source navigation.
-- `dist/api.js`: backend configuration, native/browser requests, normalization and conservative range comparisons.
-- `dist/services.js`: fictional fixtures, language labels, file validation and exact audio text.
-- `backend/server.mjs`: authenticated, bounded analysis API and source validation.
-- `backend/cloud.mjs`: Supabase email/Google authentication, private report operations and account deletion.
-- `supabase/`: database migration and account/Google setup guides.
-- `android/.../MainActivity.java`: file/camera/PDF, native HTTP bridge, speech and export.
-- `android/.../SecureStore.java`: authenticated encryption backed by Android Keystore.
-- `android/test-src`: separate instrumentation tests, not packaged in the application.
-
-## Verification limits
-
-Unit/API tests use mocked provider responses and check validation, auth, consent, error sanitization, source references, numeric preservation, uncertainty, file types, range labels and audio text. Android instrumentation tests run against a test-only fictional provider to check native transport and UI flows. They do not establish accuracy of live OCR, translation or medical explanations. Camera hardware, OEM installation restrictions and speech voices require testing on the target phone. No clinician validation has been performed.
+[Setup and deployment](backend/SETUP.md) · [Supabase](supabase/README.md) · [Google](supabase/GOOGLE_SIGN_IN.md) · [Review](IMPLEMENTATION_REVIEW.md) · [Verification](VALIDATION.md)

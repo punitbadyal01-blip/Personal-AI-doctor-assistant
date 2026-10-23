@@ -21,6 +21,7 @@ public final class MainActivity extends Activity {
  private static final String ORIGIN="https://appassets.androidplatform.net";
  private static final int PICK=10,CAMERA=11,EXPORT=12,MAX=10*1024*1024;
  private WebView web;
+ private android.widget.FrameLayout frame;
  private boolean googleSignInPending=false;
  private long googleSignInStarted=0;
  private TextToSpeech tts;
@@ -33,14 +34,14 @@ public final class MainActivity extends Activity {
  private int fileGeneration=0;
  private final java.util.concurrent.ExecutorService worker=java.util.concurrent.Executors.newSingleThreadExecutor();
  @Override public void onCreate(Bundle state){super.onCreate(state);cleanTemporaryFiles();
-  web=new WebView(this);web.setBackgroundColor(Color.rgb(250,251,248));setContentView(web);
-  web.setOnApplyWindowInsetsListener((v,insets)->{if(Build.VERSION.SDK_INT>=30){android.graphics.Insets bars=insets.getInsets(WindowInsets.Type.systemBars()|WindowInsets.Type.ime());v.setPadding(bars.left,bars.top,bars.right,bars.bottom);}else{v.setPadding(insets.getSystemWindowInsetLeft(),insets.getSystemWindowInsetTop(),insets.getSystemWindowInsetRight(),insets.getSystemWindowInsetBottom());}return insets;});
+  web=new WebView(this);web.setBackgroundColor(Color.rgb(244,247,246));frame=new android.widget.FrameLayout(this);frame.setBackgroundColor(Color.rgb(244,247,246));frame.addView(web,new android.widget.FrameLayout.LayoutParams(-1,-1));setContentView(frame);
+  frame.setOnApplyWindowInsetsListener((v,insets)->{if(Build.VERSION.SDK_INT>=30){android.graphics.Insets bars=insets.getInsets(WindowInsets.Type.systemBars());v.setPadding(bars.left,bars.top,bars.right,bars.bottom);}else{v.setPadding(insets.getSystemWindowInsetLeft(),insets.getSystemWindowInsetTop(),insets.getSystemWindowInsetRight(),insets.getSystemWindowInsetBottom());}return insets;});frame.requestApplyInsets();
   WebSettings s=web.getSettings();s.setJavaScriptEnabled(true);s.setDomStorageEnabled(true);s.setAllowFileAccess(false);s.setAllowContentAccess(false);s.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);s.setCacheMode(WebSettings.LOAD_NO_CACHE);
   CookieManager.getInstance().setAcceptCookie(false);
   web.setWebViewClient(new WebViewClient(){
    @Override public void onPageFinished(WebView v,String url){if((ORIGIN+"/assets/index.html").equals(url))handleGoogleCallback(getIntent());}
    @Override public boolean shouldOverrideUrlLoading(WebView v,WebResourceRequest request){Uri u=request.getUrl();if(request.isForMainFrame()&&"https://github.com/punitbadyal01-blip".equals(u.toString())){try{startActivity(new Intent(Intent.ACTION_VIEW,u));}catch(ActivityNotFoundException e){message("No browser is available. Visit github.com/punitbadyal01-blip on another device.");}return true;}return !ORIGIN.equals(u.getScheme()+"://"+u.getHost());}
-   @Override public WebResourceResponse shouldInterceptRequest(WebView v,WebResourceRequest r){Uri u=r.getUrl();if("https".equals(u.getScheme())&&"appassets.androidplatform.net".equals(u.getHost())){String p=u.getPath();if(p!=null&&p.startsWith("/assets/")&&!p.contains("..")){String file=p.substring(8);if(Arrays.asList("index.html","app.js","services.js","style.css","api.js").contains(file))try{String type=file.endsWith(".html")?"text/html":file.endsWith(".css")?"text/css":"text/javascript";return new WebResourceResponse(type,"UTF-8",getAssets().open(file));}catch(IOException ignored){}}}return new WebResourceResponse("text/plain","UTF-8",403,"Blocked",Collections.emptyMap(),new ByteArrayInputStream(new byte[0]));}
+   @Override public WebResourceResponse shouldInterceptRequest(WebView v,WebResourceRequest r){Uri u=r.getUrl();if("https".equals(u.getScheme())&&"appassets.androidplatform.net".equals(u.getHost())){String p=u.getPath();if(p!=null&&p.startsWith("/assets/")&&!p.contains("..")){String file=p.substring(8);if(Arrays.asList("index.html","app.js","services.js","style.css","api.js","i18n.js","ui.js","history.js","locale-en.js","locale-hi.js","locale-te.js","languages.js","language-picker.js").contains(file))try{String type=file.endsWith(".html")?"text/html":file.endsWith(".css")?"text/css":"text/javascript";return new WebResourceResponse(type,"UTF-8",getAssets().open(file));}catch(IOException ignored){}}}return new WebResourceResponse("text/plain","UTF-8",403,"Blocked",Collections.emptyMap(),new ByteArrayInputStream(new byte[0]));}
   });
   web.addJavascriptInterface(new Bridge(),"HealthClearAndroid");
   tts=new TextToSpeech(this,status->{ttsReady=status==TextToSpeech.SUCCESS;});
@@ -80,6 +81,8 @@ public final class MainActivity extends Activity {
    catch(Exception e){googleSignInPending=false;googleResult("","Could not start secure Google sign-in. Please retry.");}
   });}
   @JavascriptInterface public void cancelGoogleSignIn(){runOnUiThread(()->googleSignInPending=false);}
+  @JavascriptInterface public void beginAccountLink(){runOnUiThread(()->{googleSignInPending=true;googleSignInStarted=SystemClock.elapsedRealtime();});}
+  @JavascriptInterface public void appearance(boolean dark){runOnUiThread(()->{int color=Color.parseColor(dark?"#102422":"#f4f7f6");web.setBackgroundColor(color);frame.setBackgroundColor(color);getWindow().setStatusBarColor(color);getWindow().setNavigationBarColor(color);int flags=getWindow().getDecorView().getSystemUiVisibility();int light=View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR|View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;getWindow().getDecorView().setSystemUiVisibility(dark?(flags & ~light):(flags | light));});}
   @JavascriptInterface public boolean localDevelopment(){return isDevelopment();}
   @JavascriptInterface public String getHistory(){return SecureStore.read(MainActivity.this);}
   @JavascriptInterface public boolean saveHistory(String json){return SecureStore.save(MainActivity.this,json);}

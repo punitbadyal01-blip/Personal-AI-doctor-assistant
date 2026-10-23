@@ -1,0 +1,7 @@
+**
+!package.json
+!backend/
+!backend/server.mjs
+!backend/cloud.mjs
+!dist/
+!dist/languages.js

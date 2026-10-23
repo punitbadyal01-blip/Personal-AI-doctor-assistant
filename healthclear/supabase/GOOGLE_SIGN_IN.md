@@ -1,4 +1,4 @@
-# Google sign-in through Supabase (HealthClear 1.4)
+# Google sign-in through Supabase (HealthClear 1.5)
 
 The Android app contains a **Continue with Google** button. It opens the device browser and returns to HealthClear through a PKCE-protected authorization-code flow. The app uses the same Supabase accounts and private report table as email sign-in. No Firebase project, SDK or configuration is used.
 
@@ -23,7 +23,7 @@ The Supabase database and backend email-account/report operations passed live ve
    com.healthclear.app://auth/callback
    ```
 
-6. Install `HealthClear-1.4.apk` (HTTPS backend) or `HealthClear-dev.apk` (local USB backend). Connect the backend in Settings, then tap **Continue with Google**. Choose your Google account and return to HealthClear. Check My Reports with a fictional test report before using personal data.
+6. Install `HealthClear-1.5.apk` (HTTPS backend) or `HealthClear-dev.apk` (local USB backend). Connect the backend in Settings, then tap **Continue with Google**. Choose your Google account and return to HealthClear. Check My Reports with a fictional test report before using personal data.
 
 For another Supabase project, use that project's `/auth/v1/callback` URL in Google. The Android return URL stays the same.
 

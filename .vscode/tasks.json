@@ -2,6 +2,33 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "HealthClear: Start laptop preview",
+      "type": "process",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/healthclear/start-laptop.ps1"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "HealthClear: Run Android emulator",
+      "dependsOn": "HealthClear: Build phone development APK",
+      "type": "process",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/healthclear/android/run-emulator.ps1"
+      ],
+      "problemMatcher": []
+    },
+    {
       "label": "HealthClear: Start backend",
       "type": "process",
       "command": "node",
@@ -31,8 +58,11 @@
       "args": [
         "--test",
         "tests.mjs",
+        "locale.tests.mjs",
+        "api.tests.mjs",
         "backend/tests.mjs",
-        "backend/cloud.tests.mjs"
+        "backend/cloud.tests.mjs",
+        "languages.tests.mjs"
       ],
       "options": {
         "cwd": "${workspaceFolder}/healthclear"
@@ -91,6 +121,19 @@
         "${workspaceFolder}/healthclear/android/install-phone.ps1",
         "-Development"
       ],
+      "problemMatcher": []
+    },
+    {
+      "label": "HealthClear: Responsive browser tests",
+      "type": "process",
+      "command": "npm",
+      "args": [
+        "run",
+        "test:ui"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/healthclear"
+      },
       "problemMatcher": []
     }
   ]

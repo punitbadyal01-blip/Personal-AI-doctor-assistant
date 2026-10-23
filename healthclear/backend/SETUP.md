@@ -48,12 +48,12 @@ Accept the processing notice before choosing a personal report. The device sends
 
 ## 4. Deploy for use without USB
 
-Build the Dockerfile from this directory, or deploy `server.mjs` and `cloud.mjs` together as a Node service with the environment variables above. Bind `HOST=0.0.0.0` inside the hosting environment. Put the service behind a valid HTTPS endpoint. Set ingress limits to at least 14 MB and request timeouts above 100 seconds. Disable body/header logging, debug traces and request payload capture in the hosting platform. Do not put the provider key or access token in URLs.
+Build the Dockerfile using the healthclear directory as context, or deploy `backend/server.mjs`, `backend/cloud.mjs`, `dist/languages.js` and `package.json` with the same folder structure as a Node service with the environment variables above. Bind `HOST=0.0.0.0` inside the hosting environment. Put the service behind a valid HTTPS endpoint. Set ingress limits to at least 14 MB and request timeouts above 100 seconds. Disable body/header logging, debug traces and request payload capture in the hosting platform. Do not put the provider key or access token in URLs.
 
-    docker build -t healthclear-backend .
+    docker build -f Dockerfile -t healthclear-backend ..
     docker run --env-file .env -e HOST=0.0.0.0 -p 127.0.0.1:8080:8080 healthclear-backend
 
-Configure your HTTPS reverse proxy/hosting service separately. HTTPS certificates must be trusted by Android; the app does not disable certificate checks or follow redirects with credentials. Use the regular `HealthClear-1.4.apk` with the HTTPS origin and backend token.
+Configure your HTTPS reverse proxy/hosting service separately. HTTPS certificates must be trusted by Android; the app does not disable certificate checks or follow redirects with credentials. Use the regular `HealthClear-1.5.apk` with the HTTPS origin and backend token.
 
 This backend is intended for a personal prototype or a small controlled test. It has token authentication, a bounded request body, a 2-request concurrency cap and 60-request/10-minute cap per process. Multi-user deployment needs individual identities, per-user quotas, monitoring that avoids medical content, clinical review, and appropriate data-processing agreements. Supabase supplies optional user accounts and explicitly saved report text; the shared backend access token remains required for this controlled deployment.
 
@@ -86,3 +86,14 @@ From `healthclear`: `npm test`. Automated provider tests use mocked responses; t
 - **Provider request failed:** check provider key, model permissions and billing on the server. No fabricated explanation is shown.
 - **No offline voice:** install the corresponding English/Hindi/Telugu voice through Android text-to-speech settings. Text remains readable.
 - **Uncertain OCR:** retry with a clearer written report, or accurately correct the text; never guess a number.
+
+
+## Version 1.5 additions
+
+For browser preview on this computer, use `http://127.0.0.1:5173` and set `HEALTHCLEAR_ALLOWED_ORIGINS=http://127.0.0.1:5173` in the backend environment. This local configuration was added privately without changing your keys. Restart the backend after editing `.env`. Browser local HTTP is limited to the explicit loopback preview; production Android still requires HTTPS. Other browser origins need explicit allow-list configuration. Remove development origins from a production deployment.
+
+`POST /v1/cloud` also supports `recovery-start` (email, returns a PKCE verifier), `recovery-exchange` (code + verifier), and `password-update` (user session + password). Configure SMTP and the exact app Redirect URL before testing email recovery. Passwords must be 12–128 characters. This does not automatically configure Google OAuth.
+
+Cloud list accepts a name `search` of at most 100 characters, `sort` of newest/oldest/name and a nonnegative `offset`. The 1.5 client requests pages of 50 rows with stable secondary ordering; older clients retain the original default of 100. Cloud saves accept an optional UUID `requestId`; replaying identical content returns the existing owned row, while reusing it for different content is rejected. This prevents duplicate submissions, not semantic deduplication of separate reports.
+
+Run `npm run test:cloud` from healthclear for real backend/Supabase checks using temporary fictional users. The test removes them afterward. Do not run tests that create accounts against a production project. Browser tests use only fictional intercepted responses. The separate Android fixture, if explicitly used, runs on port 8091 and is excluded from production Docker images; emulator-only scripts forward device port 8080 to that port.

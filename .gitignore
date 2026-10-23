@@ -18,3 +18,10 @@
 *.apk.idsig
 **/.test-avd/
 **/test-output/
+
+# Browser QA artifacts
+**/playwright-report/
+**/test-results/
+
+# Supabase CLI cache
+**/supabase/.temp/

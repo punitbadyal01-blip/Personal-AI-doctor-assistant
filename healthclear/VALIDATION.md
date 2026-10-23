@@ -1,3 +1,20 @@
+# HealthClear 1.5 verification — 23 October 2026
+
+- Syntax checks passed with `npm run check`.
+- 51 Node unit/API tests passed, covering medical safety/source preservation, locales, history integrity, local/production transport restrictions, Supabase operations, recovery, idempotency and backwards-compatible pagination.
+- Before the final clean-UI refinement, 67 unique browser cases passed across executed suites: 60 width/language/theme cases plus seven functional/accessibility/online cases. All ten requested widths (320, 360, 375, 390, 414, 430, 768, 1024, 1280, 1440) were exercised through upload/review/results/history/settings in English/Hindi/Telugu and light/dark. Relevant checks were rerun after final draft/form changes. No horizontal overflow was found in those checks. Large-text settings, preserved units/source links, duplicate samples, search, dialog cancellation, keyboard skip/focus, preferences, original-text export, offline feedback, localized validation and text contrast were checked.
+- After the clean-UI refinement, 14 targeted browser cases passed: 320px English, 375px Hindi/Telugu and 1440px English in light/dark, plus keyboard/forms, multilingual picker/regional codes, mocked Arabic conversation/source/cache/cloud flow, confirmation/offline handling and text contrast. The final laptop screenshots showed no overflow or browser errors.
+- Browser provider responses were fictional and intercepted only inside the test process. Mocked online cases verified consent, review, cached translation requests, cloud idempotency request IDs and session expiry; these do not prove live OCR/AI accuracy.
+- Live Node-backend-to-Supabase checks passed: two-user sign-in, consent, idempotent saves and conflict rejection, search/sort, isolation, authenticated password change and login, report deletion, account cascade and deleted-session rejection. Temporary fictional accounts were cleaned up. No real patient data was used.
+- Supabase security and performance advisors returned no issues after the language migration. The language constraint now accepts bounded language tags; owner RLS remains intact. Live tests saved and reopened an Arabic-language report, and verified two-user isolation and deletion.
+- Searchable language picker and regional code validation passed browser tests. Mocked Arabic explanations rendered right-to-left; a two-question conversation preserved context and source links. Local gateway security tests passed; actual laptop preview connected automatically with 189 selector options and no browser errors. AI key and model were still absent, so no real AI output was verified.
+- Regular and development APKs compiled and passed v2/v3 signature and alignment verification. Bundled assets were compared byte for byte with source.
+- Version 1.5 installed on Android 36.1. Native UI instrumentation passed upload, no horizontal overflow, text verification, explanations, source links, Hindi/Telugu, encrypted saved history/reopen and developer details. A real blank-screen issue was fixed by packaging locale modules as flat assets; modules now load in Android. Physical Redmi testing is still pending. The emulator sometimes displays a System UI ANR on this laptop; that is an emulator limitation.
+- Full fixture-dependent native instrumentation was not run because starting the test-only provider was declined. Camera hardware, real offline voices, actual recovery email, Google consent and live AI remain unverified.
+- The AI key/model and Google provider remained unconfigured at the latest check. No production backend deployment, clinical certification or regulatory compliance is claimed.
+
+## Earlier verification records
+
 # Supabase update verification — 22 October 2026
 
 - 33 automated tests pass: 16 existing medical/report tests and 17 Supabase adapter/API tests with mocked responses, including Google PKCE flow and invalid configuration handling.

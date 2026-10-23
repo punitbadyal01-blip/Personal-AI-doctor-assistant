@@ -1,6 +1,6 @@
 For Google quick sign-in, see [Google setup](GOOGLE_SIGN_IN.md). No Firebase is used.
 
-# Supabase setup for HealthClear 1.4
+# Supabase setup for HealthClear 1.5
 
 Cloud integration is implemented, but no Supabase project or credentials are included. You must create your project and apply the migration before cloud accounts work. The Android app still supports fictional samples offline and local encrypted history.
 
@@ -23,7 +23,7 @@ Cloud integration is implemented, but no Supabase project or credentials are inc
 
 ## Phone installation
 
-Use `releases/HealthClear-1.4.apk` for a deployed HTTPS backend. GitHub hosts the APK and source; it does not run your Node backend or Supabase project. For local USB testing, use `HealthClear-dev.apk` and the VS Code install task with `adb reverse tcp:8080 tcp:8080`. The local development address is `http://127.0.0.1:8080`.
+Use `releases/HealthClear-1.5.apk` for a deployed HTTPS backend. GitHub hosts the APK and source; it does not run your Node backend or Supabase project. For local USB testing, use `HealthClear-dev.apk` and the VS Code install task with `adb reverse tcp:8080 tcp:8080`. The local development address is `http://127.0.0.1:8080`.
 
 ## Data and access
 
@@ -33,7 +33,7 @@ Use `releases/HealthClear-1.4.apk` for a deployed HTTPS backend. GitHub hosts th
 - The secret/admin key is used only for deleting the currently authenticated account. The database foreign key cascades report deletion. Local saved reports and exported copies are separate and must be deleted separately.
 - Deletion removes active records; backups follow your Supabase project's retention settings. Do not claim immediate erasure from all provider backups. Review provider retention and privacy settings before real medical data use.
 - This remains a personal backend protected by a shared backend access token, not a public multi-tenant production deployment. Do not publish that token or open the backend without access control. No compliance certification is claimed.
-- Password recovery is currently administrator-assisted via your Supabase Auth dashboard; a self-service in-app recovery screen is not implemented. Public release also needs abuse protection, email deliverability, production signing, and device/clinical review.
+- Android password recovery uses the email link and PKCE app callback. Configure SMTP and allow com.healthclear.app://auth/callback under Redirect URLs. Keep the app running and open the email link on that phone within ten minutes. Delivery and a real recovery-email callback remain unverified; authenticated password changes passed live tests. Public release also needs abuse protection, email deliverability, production signing, and device/clinical review.
 
 ## Verification
 
@@ -42,3 +42,5 @@ Use `releases/HealthClear-1.4.apk` for a deployed HTTPS backend. GitHub hosts th
 Manual acceptance: create/confirm/login, save a fictional test text as a personal report, restart and sign in again, open/review, decline cloud saving, delete a report, delete the account, verify a different account cannot see its reports, and confirm local history is unaffected. Test missing credentials, wrong password, offline mode, expired sessions, and deletion failure on the physical Redmi.
 
 References: [RLS](https://supabase.com/docs/guides/database/postgres/row-level-security), [API keys](https://supabase.com/docs/guides/api/api-keys), [User data and deletion](https://supabase.com/docs/guides/auth/managing-user-data).
+
+Apply all files under migrations in order, including `20261023155205_expand_report_languages.sql`. This expands the language constraint while preserving existing reports and owner access policies. The migration is already applied to the connected development project.

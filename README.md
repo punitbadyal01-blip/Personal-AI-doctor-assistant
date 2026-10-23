@@ -1,38 +1,67 @@
-Google sign-in through Supabase is implemented without Firebase. Provider activation is pending; follow the [Google setup guide](healthclear/supabase/GOOGLE_SIGN_IN.md). Email accounts and private report access passed live Supabase verification.
+# HealthClear 1.5 for Android
 
-# Supabase update — HealthClear 1.4
+By **Punit Badyal** · [Developer](https://github.com/punitbadyal01-blip)
 
-Optional cloud accounts and private saved report text are implemented. Setup: [Supabase guide](healthclear/supabase/README.md). Supabase project credentials and migration are required; they are not bundled. Install the new `HealthClear-1.4.apk` from the releases folder.
+Understand written blood-test, X-ray and ultrasound reports with source-linked AI explanations. Choose from 184 base report languages and regional variants; model quality and local speech availability vary. Menus and offline fictional examples are fully supplied in English, Hindi and Telugu. HealthClear is an installable Android app with a bundled interface, native camera/PDF viewing, offline device speech, encrypted local history and optional private Supabase accounts. It does not interpret actual scan images or make diagnoses.
 
-# HealthClear for Android
+**[Download HealthClear 1.5 APK](https://github.com/punitbadyal01-blip/Personal-AI-doctor-assistant/releases/download/v1.5/HealthClear-1.5.apk)** · [Release page](https://github.com/punitbadyal01-blip/Personal-AI-doctor-assistant/releases/tag/v1.5)
 
-Created by **Punit Badyal** · [GitHub](https://github.com/punitbadyal01-blip)
+Use Chrome on your phone and choose the APK under Assets if an in-app browser cannot download it. Android 8+ is required. The regular APK needs an HTTPS backend for online features; GitHub distributes the installer and does not run the backend. Fictional samples work offline.
 
-HealthClear explains **written** blood-test, X-ray and ultrasound reports in English, Hindi and Telugu. It is an Android app with a bundled local interface and native camera, PDF viewer, text-to-speech, encrypted history and file export.
+## What changed
 
-## Install on a phone
+- Compact mobile navigation and complete upload, review, explanation, history, settings and account screens.
+- Searchable AI report languages, regional codes and RTL explanations; English, Hindi and Telugu interface catalogs, remembered preferences, light/dark/system appearance and larger text.
+- Search, filters, sorting, confirmations, local duplicate prevention and safe handling of unreadable saved data.
+- Source-linked findings, conservative reference-range labels, consent gates, summary export and offline voice controls.
+- Optional Supabase sign-in, private cloud search/pagination, idempotent saves, password recovery integration and account deletion.
+- Report conversation with source citations and bounded, in-memory question history.
+- Automatic local browser connection; developer setup is collapsed.
+- Accessible form errors, keyboard focus, offline feedback and responses that cannot overwrite a newer session.
 
-[Download HealthClear 1.4 APK](https://github.com/punitbadyal01-blip/Personal-AI-doctor-assistant/releases/download/v1.4/HealthClear-1.4.apk)
+[Implementation review and limitations](healthclear/IMPLEMENTATION_REVIEW.md) · [Actual test results](healthclear/VALIDATION.md)
 
-If a phone’s in-app browser cannot download the file, open the [GitHub release page](https://github.com/punitbadyal01-blip/Personal-AI-doctor-assistant/releases/tag/v1.4) in Chrome and choose `HealthClear-1.4.apk` under Assets.
+## Run locally in VS Code
 
-Requires Android 8.0 or newer. Download the APK itself (not the repository ZIP or an HTML page), then open it on your phone. If an Android installation error appears, keep the exact message. The USB install task below gives a more useful diagnostic without erasing existing app data.
+For a one-command laptop preview, run `powershell -NoProfile -ExecutionPolicy Bypass -File healthclear/start-laptop.ps1`, or use **Terminal → Run Task → HealthClear: Start laptop preview** in VS Code. [Laptop testing guide](healthclear/LAPTOP_TESTING.md).
 
-## Run from VS Code
+Tested with Node.js 24 on Windows. For separate terminals, from this repository:
 
-Open **HealthClear.code-workspace**. Use **Terminal → Run Task**:
+```powershell
+npm --prefix healthclear ci
+npm --prefix healthclear run backend
+```
 
-1. **HealthClear: Tests**
-2. **HealthClear: Start backend** (configure the ignored `.env` first for real AI)
-3. Connect and authorize your USB-debugging-enabled Android phone.
-4. **HealthClear: Install and run on USB phone**
+Configure `healthclear/backend/.env` first using `.env.example`. Do not commit secrets. Your existing local Supabase configuration is preserved.
 
-The phone task builds a separate development APK and forwards port 8080 over USB. In the development app’s Settings use `http://127.0.0.1:8080` and the backend access token from your local `.env`. This loopback-only HTTP connection is disabled in the regular APK. The regular APK requires an HTTPS backend.
+For the interface preview, in another terminal:
 
-## Real processing requires configuration
+```powershell
+npm --prefix healthclear start
+```
 
-Fictional examples work offline. Personal report extraction, explanation, translation and chat use the included authenticated backend and require a server-side OpenAI API key and a supported model. No provider credential is included. No simulated output is substituted for a failed live request.
+Open http://127.0.0.1:5173. Local browser connections to http://127.0.0.1:8080 also require `HEALTHCLEAR_ALLOWED_ORIGINS=http://127.0.0.1:5173` in the backend environment. The regular Android APK still requires HTTPS.
 
-[Backend setup and phone testing](healthclear/backend/SETUP.md) · [Features, architecture and limitations](healthclear/README.md)
+For the laptop Android emulator, run **Terminal → Run Task → HealthClear: Run Android emulator**. It builds and opens the development APK in the local virtual device.
 
-The APK is signed for development/testing. It is not a clinical device, a Play Store release, or a claim of regulatory approval.
+For the phone, enable USB debugging, connect a data cable, and open `HealthClear.code-workspace`. Run **Terminal → Run Task → HealthClear: Install and run on USB phone**. It builds the development APK and forwards backend port 8080. In that app's Settings, use `http://127.0.0.1:8080` and the backend access token from your local `.env`.
+
+## Verify
+
+```powershell
+npm --prefix healthclear run check
+npm --prefix healthclear test
+npm --prefix healthclear run test:ui
+```
+
+Browser tests use Microsoft Edge on Windows; on other systems install Playwright Chromium and select it in `playwright.config.js`. Browser provider responses are explicitly fictional and are intercepted only in tests. `test:cloud` and `test:supabase` use temporary fictional accounts on your configured development Supabase project, then remove them.
+
+## External setup still required
+
+- **Real AI:** server-side `OPENAI_API_KEY` and `OPENAI_MODEL`, including model access and billing. Missing settings never produce simulated analysis.
+- **Cloud:** Supabase URL, publishable key, server-only secret key and the supplied migration. The existing connected database passed live ownership checks.
+- **Google sign-in:** enable/configure the Supabase Google provider with your Google OAuth credentials. No Firebase is used.
+- **Recovery email:** configure reliable SMTP and allow `com.healthclear.app://auth/callback` in Supabase Redirect URLs. The recovery exchange is implemented; actual email delivery has not been verified.
+- **Use without USB:** deploy the Node backend behind HTTPS. [Deployment and environment guide](healthclear/backend/SETUP.md).
+
+This is a verified development build for controlled testing. Production signing, physical-device acceptance, operational safeguards and clinical/native-speaker review remain separate requirements. No compliance or certification claim is made.

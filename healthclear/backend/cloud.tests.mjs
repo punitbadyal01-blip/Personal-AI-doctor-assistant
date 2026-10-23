@@ -45,3 +45,18 @@ test('modern Supabase secret keys use the apikey header without posing as a user
  let headers;const c=createCloud({url:'https://example.supabase.co',key:'sb_publishable_example',adminKey:'sb_secret_example',fetchImpl:async(url,options)=>{headers=options.headers;return new Response(JSON.stringify(url.endsWith('/user')?{id:'owner-a'}:{}),{status:200});}});
  await c.run({action:'delete-account',session,confirm:'DELETE'});assert.equal(headers.apikey,'sb_secret_example');assert.ok(!('Authorization' in headers));
 });
+
+test('recovery uses PKCE, a fixed callback and a non-enumerating response',async()=>{
+ const c=cloud(()=>null);const result=await c.service.run({action:'recovery-start',email:'fictional@example.com'});assert.match(result.verifier,/^[A-Za-z0-9_-]{43}$/);assert.match(result.message,/If an account exists/);const request=c.calls[0],u=new URL(request.url),body=JSON.parse(request.body);assert.equal(u.pathname,'/auth/v1/recover');assert.equal(u.searchParams.get('redirect_to'),'com.healthclear.app://auth/callback');assert.equal(body.code_challenge,createHash('sha256').update(result.verifier).digest('base64url'));assert.equal(body.code_challenge_method,'s256');assert.ok(!request.body.includes(result.verifier));
+});
+test('password update requires a verified session and validates password length',async()=>{
+ const c=cloud(()=>({id:'owner-a'}));await assert.rejects(c.service.run({action:'password-update',password:'long-new-password'}),e=>e.status===401);await assert.rejects(c.service.run({action:'password-update',session,password:'short'}),e=>e.status===400);await c.service.run({action:'password-update',session,password:'long-new-password'});const request=c.calls.at(-1);assert.equal(request.method,'PUT');assert.equal(request.headers.Authorization,'Bearer '+session);assert.deepEqual(JSON.parse(request.body),{password:'long-new-password'});
+});
+test('cloud search is bounded, encoded, stably sorted and uses the user JWT',async()=>{
+ const c=cloud(url=>url.endsWith('/user')?{id:'owner-a'}:[]);await c.service.run({action:'list',session,search:'long report?&owner_id=evil',sort:'name',offset:50,limit:50});const request=c.calls.at(-1),u=new URL(request.url);assert.equal(u.searchParams.get('limit'),'50');assert.equal(u.searchParams.get('offset'),'50');assert.equal(u.searchParams.get('order'),'name.asc,id.asc');assert.equal(u.searchParams.get('owner_id'),null);assert.ok(u.searchParams.get('name').includes('owner_id=evil'));assert.equal(request.headers.Authorization,'Bearer '+session);for(const body of [{offset:-1},{search:'x'.repeat(101)},{sort:'invalid'}])await assert.rejects(c.service.run({action:'list',session,...body}),e=>e.status===400);
+});
+test('replayed save requests return the existing own report without updating it',async()=>{
+ const id='11111111-1111-4111-8111-111111111111',report={name:'FICTIONAL',text:'Possible change.',language:'en'};let insertCount=0;const c=createCloud({url:'https://example.supabase.co',key:'public',adminKey:'admin',fetchImpl:async(url,options)=>{if(url.endsWith('/user'))return Response.json({id:'owner-a'});if(options.method==='POST'){insertCount++;return new Response(JSON.stringify({}),{status:409});}return Response.json([{id,...report}]);}});assert.deepEqual(await c.run({action:'save',session,saveConsent:true,requestId:id,report}),{id});assert.equal(insertCount,1);await assert.rejects(c.run({action:'save',session,saveConsent:true,requestId:id,report:{...report,text:'changed'}}),e=>e.status===409);
+});
+
+test('older APKs keep the original 100-report cloud pagination contract',async()=>{const c=cloud(url=>url.endsWith('/user')?{id:'owner-a'}:[]);await c.service.run({action:'list',session});assert.equal(new URL(c.calls.at(-1).url).searchParams.get('limit'),'100');});

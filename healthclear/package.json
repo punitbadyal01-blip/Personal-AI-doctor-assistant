@@ -5,7 +5,13 @@
   "scripts": {
     "start": "node server.mjs",
     "backend": "node --env-file-if-exists=backend/.env backend/server.mjs",
-    "test": "node --test tests.mjs backend/tests.mjs backend/cloud.tests.mjs",
-    "test:supabase": "node --env-file-if-exists=backend/.env backend/supabase.integration.mjs"
+    "test": "node --test tests.mjs locale.tests.mjs api.tests.mjs languages.tests.mjs backend/tests.mjs backend/cloud.tests.mjs",
+    "test:supabase": "node --env-file-if-exists=backend/.env backend/supabase.integration.mjs",
+    "test:ui": "playwright test",
+    "check": "node --check dist/app.js && node --check dist/api.js && node --check backend/server.mjs && node --check backend/cloud.mjs",
+    "test:cloud": "node --env-file-if-exists=backend/.env backend/cloud.integration.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1"
   }
 }

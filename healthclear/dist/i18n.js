@@ -1,0 +1,16 @@
+import {normalizeLanguage} from './languages.js';
+import en from './locale-en.js';
+import hi from './locale-hi.js';
+import te from './locale-te.js';
+export const catalogs={en,hi,te};
+export const languages={en:'English',hi:'हिन्दी',te:'తెలుగు'};
+export const defaults={language:'en',reportLanguage:'en',theme:'system',textSize:'standard',speed:'1'};
+export const preferences={...defaults};
+try{const saved=JSON.parse(globalThis.localStorage?.getItem('healthclear-preferences')||'{}');for(const key of Object.keys(defaults))if(valid(key,saved[key]))preferences[key]=saved[key];}catch{}
+function valid(key,value){if(key==='reportLanguage')return !!normalizeLanguage(value);return ({language:['en','hi','te'],reportLanguage:['en','hi','te'],theme:['system','light','dark'],textSize:['standard','large'],speed:['0.8','1','1.25','1.5']}[key]||[]).includes(value);}
+export function setPreference(key,value){if(!valid(key,value))return false;preferences[key]=value;try{globalThis.localStorage?.setItem('healthclear-preferences',JSON.stringify(preferences));}catch{}applyPreferences();return true;}
+export function t(key,values={}){const template=catalogs[preferences.language]?.[key]??en[key]??key;return template.replace(/\{(\w+)\}/g,(_,name)=>String(values[name]??''));}
+export function formatDate(value){const date=new Date(value);return Number.isNaN(+date)?'':new Intl.DateTimeFormat(preferences.language,{dateStyle:'medium'}).format(date);}
+export function applyPreferences(){if(typeof document==='undefined')return;const dark=preferences.theme==='dark'||preferences.theme==='system'&&globalThis.matchMedia?.('(prefers-color-scheme: dark)').matches;document.documentElement.lang=preferences.language;document.documentElement.dir='ltr';document.documentElement.dataset.theme=dark?'dark':'light';globalThis.HealthClearAndroid?.appearance?.(!!dark);document.documentElement.dataset.textSize=preferences.textSize;document.querySelector('meta[name="theme-color"]')?.setAttribute('content',dark?'#102422':'#f4f7f6');}
+if(typeof window!=='undefined'){applyPreferences();matchMedia('(prefers-color-scheme: dark)').addEventListener('change',applyPreferences);}
+export function humanError(error){const message=String(error?.message||error||'');if(/fictional explanation|Edited or personal reports/.test(message))return t('sampleChanged');if(error?.code==='backend_auth')return t('backendAuth');if(error?.code==='cloud_session'||error?.status===401)return t('sessionExpired');if(error?.status===429)return t('busy');if(/Google.*not enabled/i.test(message))return t('googleUnavailable');if(/unreadable|missing text/i.test(message))return t('unreadable');if(/file.*(empty|large|type)|valid JPG|10 MB/i.test(message))return t('fileError');if(/voice|audio|speech/i.test(message))return t('audioUnavailable');if(/not configured|credentials|model|not enabled/i.test(message)||error?.status===503)return t('serviceUnavailable');if(/confirm|password|Cloud request failed/i.test(message))return t('authError');if(/Could not connect|Connection changed|timed out/i.test(message))return t('error');if(error?.status===502)return t('aiInvalid');if(/Connect.*backend|HTTPS backend|access token/i.test(message))return t('serviceRequired');return t('error');}
