@@ -19,6 +19,7 @@ if ($devices -notmatch [regex]::Escape($serial)) {
 Write-Output 'Starting the Android emulator. A cold boot may take several minutes.'
 $ready=$false
 for ($attempt=0; $attempt -lt 120; $attempt++) {
+    if ($emulatorProcess -and $emulatorProcess.HasExited) { throw 'The emulator closed before Android finished booting. Run this task again and leave its window open; check test-output/emulator logs if it closes unexpectedly.' }
     try { $boot=(& $adb -s $serial shell getprop sys.boot_completed 2>$null) -join '' } catch { $boot='' }
     if ($boot.Trim() -eq '1') { $ready=$true; break }
     if ($attempt % 5 -eq 0) { Write-Output 'Waiting for Android to finish booting...' }
