@@ -1,3 +1,11 @@
+# HealthClear 1.5.1 — 24 October 2026
+
+- Fixed the uploaded-image/blank-text dead end: AI configuration is checked before the file is sent. An unavailable service leaves the user on Upload with a clear explanation.
+- Blank, unreadable and scan-only review states cannot be marked verified or analysed. OCR failures appear beside the actions, and a successful retry clears stale errors and requires fresh verification.
+- Removed unavailable sample chat/cloud-save actions, browser-only unsupported personal local-save actions, repeated summary source links and unused placeholder adapters. Per-finding citations, sample questions, export, cloud account and native saving remain.
+- 51 unit/API tests passed. Ten targeted browser checks passed, including missing configuration (zero OCR requests), JPEG/JFIF upload handling, empty OCR, failed-then-successful retry, edit guards, sample controls, three UI languages and the mocked online/cloud conversation flow.
+- This patch does not enable an AI provider: the local API key/model were still absent at verification. No personal medical report was submitted to a provider. Real OCR/explanation, physical phone acceptance and live model translation accuracy remain unverified.
+
 # HealthClear 1.5 verification — 23 October 2026
 
 - Syntax checks passed with `npm run check`.

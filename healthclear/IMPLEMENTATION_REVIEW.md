@@ -95,3 +95,7 @@ The local startup and emulator scripts are available as VS Code tasks. See LAPTO
 ## Clean UI refinement
 
 The upload screen now has one primary upload area with concise status and secondary sample choices. Repeated branding, repeated upload headings and the duplicate journey diagram were removed. Settings uses a single column with visible language/appearance controls and expandable account, privacy, help and developer sections. Technical connection fields remain in a collapsed developer section. A restrained system-font hierarchy, consistent spacing and quieter cards apply across screens. Native and browser functionality is preserved.
+
+## 1.5.1 upload and UI cleanup
+
+The screenshot reported on 24 October showed an empty extraction box with an enabled Explain action. Configuration preflight now prevents that path when AI is absent. Review controls track actual text readiness, failed extraction messages stay beside the action, and successful retries clear old failures. Nonfunctional sample actions and unused placeholder adapters were removed. Backend credentials are still an external requirement; this patch cannot manufacture provider access.

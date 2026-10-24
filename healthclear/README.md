@@ -35,6 +35,6 @@ From the repository root:
 powershell -File healthclear/android/build-apk.ps1 -SdkPath D:/android -JavaPath "C:/Program Files/Java/jdk-24"
 ```
 
-Add `-Development` for `HealthClear-dev.apk`. The regular `HealthClear-1.5.apk` requires HTTPS; the development APK permits only `http://127.0.0.1:8080`. Preserve the ignored signing key privately to retain update compatibility. This key is for development/testing, not a Play Store production signing setup.
+Add `-Development` for `HealthClear-dev.apk`. The regular `HealthClear-1.5.1.apk` requires HTTPS; the development APK permits only `http://127.0.0.1:8080`. Preserve the ignored signing key privately to retain update compatibility. This key is for development/testing, not a Play Store production signing setup.
 
 [Setup and deployment](backend/SETUP.md) · [Supabase](supabase/README.md) · [Google](supabase/GOOGLE_SIGN_IN.md) · [Review](IMPLEMENTATION_REVIEW.md) · [Verification](VALIDATION.md)

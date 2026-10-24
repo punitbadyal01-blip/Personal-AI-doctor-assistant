@@ -1,12 +1,16 @@
-# HealthClear 1.5 for Android
+# HealthClear 1.5.1 for Android
 
 By **Punit Badyal** · [Developer](https://github.com/punitbadyal01-blip)
 
 Understand written blood-test, X-ray and ultrasound reports with source-linked AI explanations. Choose from 184 base report languages and regional variants; model quality and local speech availability vary. Menus and offline fictional examples are fully supplied in English, Hindi and Telugu. HealthClear is an installable Android app with a bundled interface, native camera/PDF viewing, offline device speech, encrypted local history and optional private Supabase accounts. It does not interpret actual scan images or make diagnoses.
 
-**[Download HealthClear 1.5 APK](https://github.com/punitbadyal01-blip/Personal-AI-doctor-assistant/releases/download/v1.5/HealthClear-1.5.apk)** · [Release page](https://github.com/punitbadyal01-blip/Personal-AI-doctor-assistant/releases/tag/v1.5)
+**[Download HealthClear 1.5.1 APK](https://github.com/punitbadyal01-blip/Personal-AI-doctor-assistant/releases/download/v1.5.1/HealthClear-1.5.1.apk)** · [Release page](https://github.com/punitbadyal01-blip/Personal-AI-doctor-assistant/releases/tag/v1.5.1)
 
 Use Chrome on your phone and choose the APK under Assets if an in-app browser cannot download it. Android 8+ is required. The regular APK needs an HTTPS backend for online features; GitHub distributes the installer and does not run the backend. Fictional samples work offline.
+
+## Upload reliability fix
+
+The app checks AI service configuration before sending a personal report. A missing provider setup leaves you on Upload with a clear explanation. Empty or unreadable OCR text cannot be verified or analysed, and successful retries clear old errors. Sample screens omit unavailable live-chat and cloud-save actions.
 
 ## What changed
 

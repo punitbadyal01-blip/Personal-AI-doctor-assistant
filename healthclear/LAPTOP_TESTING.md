@@ -36,7 +36,7 @@ With an emulator running, from the repository root:
 & 'D:/android/platform-tools/adb.exe' -s emulator-5556 shell am start -n com.healthclear.app/.MainActivity
 ```
 
-Replace the SDK path and emulator serial with those on your machine. The development APK permits the loopback backend URL above. The regular `HealthClear-1.5.apk` requires an HTTPS backend for online features. Both APKs contain the offline fictional samples.
+Replace the SDK path and emulator serial with those on your machine. The development APK permits the loopback backend URL above. The regular `HealthClear-1.5.1.apk` requires an HTTPS backend for online features. Both APKs contain the offline fictional samples.
 
 The ignored local AVD can be started on this laptop with:
 

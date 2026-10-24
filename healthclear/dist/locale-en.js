@@ -161,7 +161,7 @@ export default {
   "developer": "About the developer",
   "developerBio": "Built by Punit Badyal to make written medical reports easier to understand.",
   "github": "View developer on GitHub",
-  "version": "HealthClear 1.5 · Android 8+",
+  "version": "HealthClear 1.5.1 · Android 8+",
   "skip": "Skip to main content",
   "offline": "You are offline. Samples and local saved reports remain available.",
   "consentRequired": "Please accept the processing notice first.",
@@ -219,5 +219,8 @@ export default {
   "noAiYet": "AI setup pending",
   "privateByDefault": "Private by default",
   "sourceLinked": "Linked to your report",
-  "languageChoice": "In your language"
+  "languageChoice": "In your language",
+  "analysisNotConfigured": "AI report processing is not configured yet. No report was sent for analysis. The app administrator must configure the AI service; you can try a fictional sample meanwhile.",
+  "emptyExtraction": "No readable text was returned. Try a clearer image or PDF. Explain remains unavailable until there is report text to verify.",
+  "ocrFailed": "Text extraction failed. Retry, or copy the written report exactly before verifying it."
 };

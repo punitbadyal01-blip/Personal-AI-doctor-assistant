@@ -53,7 +53,7 @@ Build the Dockerfile using the healthclear directory as context, or deploy `back
     docker build -f Dockerfile -t healthclear-backend ..
     docker run --env-file .env -e HOST=0.0.0.0 -p 127.0.0.1:8080:8080 healthclear-backend
 
-Configure your HTTPS reverse proxy/hosting service separately. HTTPS certificates must be trusted by Android; the app does not disable certificate checks or follow redirects with credentials. Use the regular `HealthClear-1.5.apk` with the HTTPS origin and backend token.
+Configure your HTTPS reverse proxy/hosting service separately. HTTPS certificates must be trusted by Android; the app does not disable certificate checks or follow redirects with credentials. Use the regular `HealthClear-1.5.1.apk` with the HTTPS origin and backend token.
 
 This backend is intended for a personal prototype or a small controlled test. It has token authentication, a bounded request body, a 2-request concurrency cap and 60-request/10-minute cap per process. Multi-user deployment needs individual identities, per-user quotas, monitoring that avoids medical content, clinical review, and appropriate data-processing agreements. Supabase supplies optional user accounts and explicitly saved report text; the shared backend access token remains required for this controlled deployment.
 
