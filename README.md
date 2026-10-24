@@ -62,7 +62,7 @@ Browser tests use Microsoft Edge on Windows; on other systems install Playwright
 
 ## External setup still required
 
-- **Real AI:** server-side `OPENAI_API_KEY` and `OPENAI_MODEL`, including model access and billing. Missing settings never produce simulated analysis.
+- **Real AI:** select OpenAI or Google Gemini in the server-side configuration. Gemini uses `AI_PROVIDER=gemini`, `GEMINI_API_KEY`, `GEMINI_MODEL` and a confirmed paid-service declaration. OpenAI uses `OPENAI_API_KEY` and `OPENAI_MODEL`. See [backend setup](healthclear/backend/SETUP.md). Missing settings never produce simulated analysis.
 - **Cloud:** Supabase URL, publishable key, server-only secret key and the supplied migration. The existing connected database passed live ownership checks.
 - **Google sign-in:** enable/configure the Supabase Google provider with your Google OAuth credentials. No Firebase is used.
 - **Recovery email:** configure reliable SMTP and allow `com.healthclear.app://auth/callback` in Supabase Redirect URLs. The recovery exchange is implemented; actual email delivery has not been verified.

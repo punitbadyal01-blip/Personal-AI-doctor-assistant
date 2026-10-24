@@ -10,10 +10,29 @@ Open the root `HealthClear.code-workspace`. The workspace includes build, test, 
 
 Copy `.env.example` to `.env` in this folder if `.env` does not exist. This computer already has an ignored `.env` with a generated random backend access token. Keep that token private.
 
-Set:
+Choose a provider with `AI_PROVIDER=openai` or `AI_PROVIDER=gemini`. There is no automatic fallback to another provider. Keep the provider key only in this server-side `.env`, never in the APK, GitHub, screenshots or chat.
+
+For a **Google AI Studio / Gemini API key**, set:
+
+```env
+AI_PROVIDER=gemini
+GEMINI_API_KEY=your_private_key
+GEMINI_MODEL=your_exact_gemini_model_id
+GEMINI_PAID_SERVICE=false
+```
+
+Replace the model placeholder with the exact Gemini model ID available to your project (the `gemini-...` identifier, not “Google AI Studio”). Choose a model supporting image/PDF input and structured JSON output. The backend uses Google's `generateContent` REST API, inline files and a JSON schema, and validates the returned source links and measurements with the same checks as the OpenAI adapter.
+
+Personal uploads remain disabled while `GEMINI_PAID_SERVICE=false`. Set it to `true` **only after confirming an active Cloud Billing account for the key's project** and reviewing Google's data terms. This flag records your declaration; the app cannot verify billing. Google's unpaid services may use inputs and responses to improve products and explicitly prohibit submitting sensitive personal information. Paid services have different data-use terms, but retention still applies. Offline fictional samples require no key or billing. Do not enable billing or incur charges without the project owner's authorization.
+
+To test your Gemini key with unpaid quota, leave `GEMINI_PAID_SERVICE=false`, fill in the key and exact model ID, then run `npm run test:gemini` from `healthclear`. This separate command sends only a fixed fictional report embedded in its source. It does not accept files or personal text and does not enable the app's personal-upload routes. Quota/model availability may still prevent the test from completing. This is an optional live provider call, not part of `npm test`.
+
+For **OpenAI**, set `AI_PROVIDER=openai` and:
 
 - `OPENAI_API_KEY`: your API project key. Keep it only on the server, never in the APK, GitHub, screenshots or chat.
 - `OPENAI_MODEL`: an API model available to your account that supports image/PDF inputs and strict JSON-schema Responses output. Check the current provider model documentation; do not use a ChatGPT subscription name.
+For either provider, also set:
+
 - `HEALTHCLEAR_ACCESS_TOKEN`: a random secret of at least 32 characters. This protects this personal backend instance. The app uses this token, not the provider key.
 - `HOST=127.0.0.1`, `PORT=8080` for local USB development.
 
@@ -44,7 +63,7 @@ In the development app go to Settings:
 - Access token: `HEALTHCLEAR_ACCESS_TOKEN` from your `.env`
 - Tap **Connect & test**, then return to Upload.
 
-Accept the processing notice before choosing a personal report. The device sends traffic through the USB forward to your local backend, and the backend calls OpenAI over HTTPS. This is not offline medical analysis. Only the development build permits HTTP to this exact loopback origin. Never use this development APK for broad distribution.
+Accept the processing notice before choosing a personal report. The device sends traffic through the USB forward to your local backend, and the backend calls the selected AI provider over HTTPS. This is not offline medical analysis. Only the development build permits HTTP to this exact loopback origin. Never use this development APK for broad distribution.
 
 ## 4. Deploy for use without USB
 
@@ -67,11 +86,13 @@ All POST routes require `Authorization: Bearer <backend token>`. Analysis routes
 - `POST /v1/explain`: `{text, language, consent}`; returns findings, follow-up claims with exact source quotes and zero-based line references, general definitions and doctor questions.
 - `POST /v1/chat`: `{text, language, question, consent}`; returns cited claims and whether evidence is sufficient.
 
-Only `en`, `hi`, `te` are accepted. Missing/uncertain text, invalid references and unsupported generated numbers are rejected. Prompt-level guardrails are not a guarantee of clinical correctness: human review of source text and clinician interpretation remain necessary.
+Explanation languages accept the supported base languages and bounded regional tags in `dist/languages.js`; interface translations remain English, Hindi and Telugu. Missing/uncertain text, invalid references and unsupported generated numbers are rejected. Prompt-level guardrails are not a guarantee of clinical correctness: human review of source text and clinician interpretation remain necessary.
 
 ## Privacy
 
-Requests use the provider Responses API with `store:false`; that does not guarantee zero provider retention. Analysis is transient and request bodies are not logged. Explicit cloud saves persist reviewed report text in Supabase until deleted; provider backup retention applies. Provider abuse-monitoring retention and exceptions still apply; review your provider settings and agreements. Uploaded content is treated as data, not instructions. No training consent collection is implemented. Android saves report text/explanation only on explicit Save, encrypted with Android Keystore; backup is disabled. Original files are temporary and are not in saved history. The app can delete local history. Export writes a plaintext summary to a location explicitly chosen by the user.
+OpenAI requests use Responses with `store:false`. Gemini requests use `generateContent` with `store:false` and inline file data, without creating Files API uploads or explicit caches. Neither setting guarantees zero provider retention or changes unpaid-service data terms. Analysis is transient and request bodies are not logged. Explicit cloud saves persist reviewed report text in Supabase until deleted; provider backup retention applies. Provider abuse-monitoring retention and exceptions still apply; review your provider settings and agreements. Uploaded content is treated as data, not instructions. No training consent collection is implemented. Android saves report text/explanation only on explicit Save, encrypted with Android Keystore; backup is disabled. Original files are temporary and are not in saved history. The app can delete local history. Export writes a plaintext summary to a location explicitly chosen by the user.
+
+Google references: [Generate content API](https://ai.google.dev/api/generate-content), [Structured output](https://ai.google.dev/gemini-api/docs/generate-content/structured-output), [Data-use terms](https://ai.google.dev/gemini-api/terms). Keep the app educational; these terms prohibit clinical practice and medical advice. Adding an adapter does not establish approval for a clinical deployment.
 
 Official implementation references: [File inputs](https://developers.openai.com/api/docs/guides/file-inputs), [Structured outputs](https://developers.openai.com/api/docs/guides/structured-outputs), [Data controls and retention](https://developers.openai.com/api/docs/guides/your-data).
 

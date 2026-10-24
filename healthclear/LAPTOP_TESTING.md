@@ -17,7 +17,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File healthclear/start-laptop.ps1
 5. In Settings change the interface language, theme and text size, then reload. Resize the window to check the mobile layout.
 6. Try a rejected file type or continue without verifying text to check error messages.
 
-The laptop browser connects automatically through a loopback-only gateway. It never receives your backend access token. Developer connection controls remain collapsed for manual overrides. Supabase is configured locally. Real OCR/explanation additionally requires `OPENAI_API_KEY` and `OPENAI_MODEL` on the backend; they are not currently configured. Google login requires provider activation. Samples are explicitly fictional and never masquerade as real analysis.
+The laptop browser connects automatically through a loopback-only gateway. It never receives your backend access token. Developer connection controls remain collapsed for manual overrides. Supabase is configured locally. Real OCR/explanation requires a configured provider in `backend/.env`: OpenAI key/model, or `AI_PROVIDER=gemini` with `GEMINI_API_KEY`, `GEMINI_MODEL` and a paid-service declaration. See [backend setup](backend/SETUP.md). Restart the backend after editing `.env`; the preview launcher reuses an existing process. Google login requires provider activation. Samples are explicitly fictional and never masquerade as real analysis.
 
 In Settings, use **Browse languages** to search 184 base report languages and regional variants, or enter a code such as `fr-CA`. AI explanations support RTL layout. Offline sample explanations remain explicitly limited to three supplied languages.
 

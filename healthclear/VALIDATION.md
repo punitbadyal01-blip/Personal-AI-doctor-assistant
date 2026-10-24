@@ -1,3 +1,10 @@
+# Gemini source update — 24 October 2026
+
+- Added explicit server-side OpenAI/Gemini selection, Gemini inline JPEG/PNG/PDF inputs and structured explanations/chat. Responses still pass the shared source, measurement, negation and uncertainty guards. Blocked/truncated/malformed responses fail without invented output; errors never echo provider payloads.
+- User confirmed billing is not set up. The ignored local configuration selects Gemini with `GEMINI_PAID_SERVICE=false`; personal processing stays disabled. The app explains free testing mode before sending a file. The optional `npm run test:gemini` command accepts no user report input and sends only its fixed fictional text.
+- 57 unit/API tests passed, including six Gemini-specific tests. Eight unique browser cases passed across the OCR-recovery and online suites; all five OCR-recovery cases were rerun after the free-mode notice was added. Syntax and whitespace checks passed.
+- Gemini key and model were absent at verification. No live Gemini call was made, billing was not enabled, and no personal report was sent. The published 1.5.1 APK is unchanged by this source update; rebuild Android assets before distributing the updated consent notices.
+
 # HealthClear 1.5.1 — 24 October 2026
 
 - Fixed the uploaded-image/blank-text dead end: AI configuration is checked before the file is sent. An unavailable service leaves the user on Upload with a clear explanation.

@@ -59,9 +59,23 @@ export function validateResult(kind,result,body){
  }
  return result;
 }
-export function createProvider({apiKey,model,fetchImpl=fetch}){
+export function providerConfig(env={}){
+ const providerName=(env.AI_PROVIDER||'openai').trim().toLowerCase();
+ if(!['openai','gemini'].includes(providerName))throw new Error('AI_PROVIDER must be openai or gemini.');
+ const gemini=providerName==='gemini';
+ const apiKey=(env[gemini?'GEMINI_API_KEY':'OPENAI_API_KEY']||'').trim();
+ const model=(env[gemini?'GEMINI_MODEL':'OPENAI_MODEL']||'').trim().replace(/^models\//,'');
+ if(gemini&&model&&!/^gemini-[a-zA-Z0-9._-]+$/.test(model))throw new Error('GEMINI_MODEL must be the Gemini model ID, not an AI Studio URL or display name.');
+ // This is an administrator declaration, not a billing verification API.
+ const processingAllowed=!gemini||env.GEMINI_PAID_SERVICE==='true';
+ return {providerName,apiKey,model,sampleOnly:gemini&&!processingAllowed,configured:!!(apiKey&&model&&processingAllowed)};
+}
+export function createProvider({apiKey,model,providerName='openai',fetchImpl=fetch}){
+ if(!['openai','gemini'].includes(providerName))throw new Error('Unsupported AI provider.');
+ if(providerName==='gemini'&&model&&!/^gemini-[a-zA-Z0-9._-]+$/.test(model))throw new Error('Invalid Gemini model ID.');
  return async(kind,body)=>{
-  if(!apiKey||!model)throw new ApiError(503,'Server needs OPENAI_API_KEY and OPENAI_MODEL. Samples remain available.');
+  if(!apiKey||!model)throw new ApiError(503,'Server needs an AI provider key and model. Samples remain available.');
+  if(!Object.hasOwn(schemas,kind))throw new ApiError(400,'Unsupported analysis operation.');
   let content;
   if(kind==='ocr'){
    validateUpload(body);const data=`data:${body.mime};base64,${body.base64}`;
@@ -71,16 +85,26 @@ export function createProvider({apiKey,model,fetchImpl=fetch}){
    if(kind==='chat'){requireString(body.question,500);if(body.previousQuestions!==undefined&&(!Array.isArray(body.previousQuestions)||body.previousQuestions.length>4||body.previousQuestions.some(q=>typeof q!=='string'||!q.trim()||q.length>500)))throw new ApiError(400,'Invalid conversation context.');}
    content=[{type:'input_text',text:JSON.stringify({task:kind==='explain'?'Explain individual findings; include followups ONLY explicitly stated in the report. Give general definitions and questions for a clinician. No unsupported summary.':'Answer the question with cited claims. If insufficient, set enoughInformation=false. Put only general definitions in education. No treatment directions.',language,reportLines:lines.map((text,ref)=>({ref,text})),question:kind==='chat'?body.question:undefined,previousQuestions:kind==='chat'?body.previousQuestions||[]:undefined})}];
   }
-  let response;try{response=await fetchImpl('https://api.openai.com/v1/responses',{method:'POST',headers:{Authorization:`Bearer ${apiKey}`,'Content-Type':'application/json'},body:JSON.stringify({model,store:false,instructions:safety,input:[{role:'user',content}],text:{format:{type:'json_schema',name:`healthclear_${kind}`,strict:true,schema:schemas[kind]}},max_output_tokens:10000}),signal:AbortSignal.timeout(90000)});}catch{throw new ApiError(504,'The AI service timed out or could not be reached. Please retry.');}
+  const gemini=providerName==='gemini';
+  const url=gemini?`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`:'https://api.openai.com/v1/responses';
+  const request=gemini?{store:false,systemInstruction:{parts:[{text:safety}]},contents:[{role:'user',parts:content.map(part=>part.type==='input_text'?{text:part.text}:{inlineData:{mimeType:body.mime,data:body.base64}})}],generationConfig:{candidateCount:1,maxOutputTokens:10000,responseFormat:{text:{mimeType:'APPLICATION_JSON',schema:schemas[kind]}}}}:{model,store:false,instructions:safety,input:[{role:'user',content}],text:{format:{type:'json_schema',name:`healthclear_${kind}`,strict:true,schema:schemas[kind]}},max_output_tokens:10000};
+  let response;try{response=await fetchImpl(url,{method:'POST',redirect:'error',headers:{...(gemini?{'x-goog-api-key':apiKey}:{Authorization:`Bearer ${apiKey}`}), 'Content-Type':'application/json'},body:JSON.stringify(request),signal:AbortSignal.timeout(90000)});}catch{throw new ApiError(504,'The AI service timed out or could not be reached. Please retry.');}
   if(!response.ok)throw new ApiError(response.status===429?429:502,response.status===429?'AI service limit reached. Try again later.':'AI provider request failed. Check server credentials, model access and billing.');
   let data;try{data=await response.json();}catch{throw new ApiError(502,'Invalid AI response.');}
-  if(data.status!=='completed')throw new ApiError(502,'The AI response was incomplete. Use a shorter report or retry.');
-  const output=(data.output||[]).flatMap(o=>o.content||[]).filter(c=>c.type==='output_text').map(c=>c.text).join('');
+  let output;
+  if(gemini){
+   const candidate=data?.candidates?.[0];
+   if(data?.promptFeedback?.blockReason||candidate?.finishReason!=='STOP'||!Array.isArray(candidate?.content?.parts))throw new ApiError(502,'The AI response was blocked or incomplete. Use a clearer written report or retry.');
+   output=candidate.content.parts.filter(p=>p&&p.thought!==true&&typeof p.text==='string').map(p=>p.text).join('');
+  }else{
+   if(data?.status!=='completed'||!Array.isArray(data.output))throw new ApiError(502,'The AI response was incomplete. Use a shorter report or retry.');
+   output=data.output.flatMap(o=>o?.content||[]).filter(c=>c?.type==='output_text').map(c=>c.text).join('');
+  }
   let parsed;try{parsed=JSON.parse(output);}catch{throw new ApiError(502,'The provider could not safely return an explanation.');}
   return validateResult(kind,parsed,body);
  };
 }
-export function createServer({accessToken,provider,configured=true,cloud=createCloud({}),allowedOrigins=['https://appassets.androidplatform.net']}){
+export function createServer({accessToken,provider,configured=true,providerName='openai',sampleOnly=false,cloud=createCloud({}),allowedOrigins=['https://appassets.androidplatform.net']}){
  let active=0,windowStart=Date.now(),requests=0;
  const respond=(res,status,data)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','X-Frame-Options':'DENY'});res.end(JSON.stringify(data));};
  return http.createServer(async(req,res)=>{
@@ -91,10 +115,10 @@ export function createServer({accessToken,provider,configured=true,cloud=createC
   if(req.url==='/health'&&req.method==='GET'){respond(res,200,{status:'ok'});return;}
   const received=Buffer.from(req.headers.authorization||''),expected=Buffer.from(`Bearer ${accessToken||''}`);
   if(!accessToken||accessToken.length<32||received.length!==expected.length||!timingSafeEqual(received,expected)){respond(res,401,{error:'Invalid backend access token.',code:'backend_auth'});return;}
-  if(req.url==='/v1/status'&&req.method==='POST'){respond(res,200,{configured,cloudConfigured:cloud.ready,retention:'Analysis is not saved automatically. Explicit cloud saves persist reviewed text in Supabase until deletion. OpenAI processing and provider retention apply; store:false does not guarantee zero retention.'});req.resume();return;}
+  if(req.url==='/v1/status'&&req.method==='POST'){respond(res,200,{configured:configured&&!sampleOnly,provider:providerName,sampleOnly,cloudConfigured:cloud.ready,retention:'Analysis is not saved automatically. Explicit cloud saves persist reviewed text in Supabase until deletion. The configured AI provider processes uploads and text; provider retention applies. Request storage controls do not guarantee zero retention.'});req.resume();return;}
   const kind={'/v1/ocr':'ocr','/v1/explain':'explain','/v1/chat':'chat','/v1/cloud':'cloud'}[req.url];
   if(!kind||req.method!=='POST'){respond(res,404,{error:'Not found.'});return;}
-  if(!configured&&kind!=='cloud'){respond(res,503,{error:'Backend provider credentials/model are not configured.'});req.resume();return;}
+  if((!configured||sampleOnly)&&kind!=='cloud'){respond(res,503,{error:sampleOnly?'Gemini is in free testing mode. Personal report processing is disabled; use fictional samples.':'Backend provider credentials/model are not configured.'});req.resume();return;}
   if(Date.now()-windowStart>600000){windowStart=Date.now();requests=0;}
   if(active>=2||requests>=60){respond(res,429,{error:'Service is busy. Please wait and retry.'});req.resume();return;}
   active++;requests++;
@@ -114,8 +138,9 @@ export function createServer({accessToken,provider,configured=true,cloud=createC
  });
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
- const {OPENAI_API_KEY:apiKey,OPENAI_MODEL:model,HEALTHCLEAR_ACCESS_TOKEN:accessToken}=process.env;
+ const {HEALTHCLEAR_ACCESS_TOKEN:accessToken}=process.env;
+ let config;try{config=providerConfig(process.env);}catch(e){console.error(e.message);process.exit(1);}
  if(!accessToken||accessToken.length<32){console.error('Set HEALTHCLEAR_ACCESS_TOKEN to a random value at least 32 characters long.');process.exit(1);}
- const server=createServer({accessToken,provider:createProvider({apiKey,model}),configured:!!(apiKey&&model),allowedOrigins:['https://appassets.androidplatform.net',...(process.env.HEALTHCLEAR_ALLOWED_ORIGINS||'').split(',').map(s=>s.trim()).filter(Boolean)],cloud:createCloud({url:process.env.SUPABASE_URL,key:process.env.SUPABASE_PUBLISHABLE_KEY,adminKey:process.env.SUPABASE_SECRET_KEY})});server.requestTimeout=100000;server.headersTimeout=15000;
+ const server=createServer({accessToken,provider:createProvider(config),configured:config.configured,providerName:config.providerName,sampleOnly:config.sampleOnly,allowedOrigins:['https://appassets.androidplatform.net',...(process.env.HEALTHCLEAR_ALLOWED_ORIGINS||'').split(',').map(s=>s.trim()).filter(Boolean)],cloud:createCloud({url:process.env.SUPABASE_URL,key:process.env.SUPABASE_PUBLISHABLE_KEY,adminKey:process.env.SUPABASE_SECRET_KEY})});server.requestTimeout=100000;server.headersTimeout=15000;
  server.listen(Number(process.env.PORT||8080),process.env.HOST||'127.0.0.1',()=>console.log('HealthClear backend is listening. No report content is logged.'));
 }

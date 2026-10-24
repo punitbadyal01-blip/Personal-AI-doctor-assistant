@@ -23,7 +23,7 @@ No-save is the default. Personal files require processing consent and text verif
 
 Explicit local saves keep reviewed text/explanations encrypted on Android. Browser preview stores only sample references. Cloud saves keep reviewed text, filename, language and timestamp under owner-only RLS; original files and generated explanations are not stored in Supabase. Cloud report reopening requires new processing consent for new AI requests. Account deletion revokes sessions and cascades owned report deletion. Provider backups follow the project's retention settings.
 
-Backend and user-session tokens stay in memory. API keys and Supabase admin secrets remain server-side. Connection changes cancel pending client promises, and stale responses cannot establish a replacement session. Passwords/tokens/report text are not logged. OpenAI processing uses `store:false`; provider retention still applies.
+Backend and user-session tokens stay in memory. API keys and Supabase admin secrets remain server-side. Connection changes cancel pending client promises, and stale responses cannot establish a replacement session. Passwords/tokens/report text are not logged. OpenAI and Gemini adapters request `store:false`; provider retention still applies. Gemini personal processing also requires the administrator to confirm paid-service billing in the backend configuration; unpaid Gemini services must not receive personal reports. See [provider setup](backend/SETUP.md).
 
 Translations are cached only in the current report's memory and are discarded when leaving it. Android and browser playback select local voices; missing voices produce a readable fallback. Exported summaries are plaintext copies deliberately chosen by the user.
 
